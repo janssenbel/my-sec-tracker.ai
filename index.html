@@ -9,14 +9,180 @@
     <meta property="og:description" content="An offline-first corporate compliance and filing management application for Philippine SEC transactions, fees, itemized expenses, and balance tracking." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- PWA & Mobile Web App Settings -->
+    <meta name="application-name" content="SEC Tracker" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SEC Tracker" />
+    <meta name="theme-color" content="#0f172a" />
+
+    <!-- Static Apple Touch & PWA Icon Links -->
+    <link id="appleTouchIcon" rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+    <link id="appleTouchPrecomposed" rel="apple-touch-icon-precomposed" sizes="180x180" href="./apple-touch-icon.png" />
+    <link id="appFavicon" rel="icon" type="image/png" sizes="192x192" href="./pwa-192x192.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png" />
+    <link id="appManifest" rel="manifest" href="./manifest.json" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='%232563eb'><path d='M4 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6zm4 4h10v2H8v-2zm0 4h10v2H8v-2zm0 4h7v2H8v-2z'/><path fill='%2310b981' d='M26 10l-4 4 1.4 1.4L26 12.8l4.6 4.6L32 16z'/></svg>" />
+
+    <!-- High-Resolution Canvas Icon Generator & Dynamic Link Injector -->
+    <script>
+      (function generateHeaderMatchedAppIcon() {
+        try {
+          var canvas = document.createElement('canvas');
+          canvas.width = 512;
+          canvas.height = 512;
+          var ctx = canvas.getContext('2d');
+          if (!ctx) return;
+
+          // 1. Rich Deep Navy & Blue Gradient Base matching App & Header
+          var bg = ctx.createLinearGradient(0, 0, 512, 512);
+          bg.addColorStop(0, '#090e1a');
+          bg.addColorStop(0.35, '#0f172a');
+          bg.addColorStop(0.7, '#1e3a8a');
+          bg.addColorStop(1, '#2563eb');
+          ctx.fillStyle = bg;
+          ctx.fillRect(0, 0, 512, 512);
+
+          // 2. Central Ambient Radial Glow
+          var glow = ctx.createRadialGradient(256, 210, 20, 256, 210, 220);
+          glow.addColorStop(0, 'rgba(59, 130, 246, 0.40)');
+          glow.addColorStop(0.6, 'rgba(30, 58, 138, 0.20)');
+          glow.addColorStop(1, 'rgba(15, 23, 42, 0)');
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(256, 210, 220, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 3. Header-Style Emblem Box (Rounded Squircle matching header badge)
+          var boxSize = 250;
+          var boxX = 256 - (boxSize / 2);
+          var boxY = 80;
+          var cornerR = 52;
+          
+          ctx.save();
+          // Shadow behind header badge
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+          ctx.shadowBlur = 24;
+          ctx.shadowOffsetY = 12;
+
+          var boxGrad = ctx.createLinearGradient(boxX, boxY, boxX + boxSize, boxY + boxSize);
+          boxGrad.addColorStop(0, '#3b82f6');
+          boxGrad.addColorStop(0.5, '#2563eb');
+          boxGrad.addColorStop(1, '#4338ca');
+          ctx.fillStyle = boxGrad;
+
+          ctx.beginPath();
+          ctx.roundRect(boxX, boxY, boxSize, boxSize, [cornerR]);
+          ctx.fill();
+          ctx.restore();
+
+          // Outer hairline rim on badge
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.roundRect(boxX, boxY, boxSize, boxSize, [cornerR]);
+          ctx.stroke();
+
+          // 4. SEC Corporate Building2 Icon inside badge
+          // Classical Triangle Pediment
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.moveTo(256, 122);
+          ctx.lineTo(176, 162);
+          ctx.lineTo(336, 162);
+          ctx.closePath();
+          ctx.fill();
+
+          // Entablature beam
+          ctx.fillStyle = '#e0f2fe';
+          ctx.fillRect(172, 166, 168, 12);
+
+          // 4 Classical Pillars
+          var pillars = [186, 224, 268, 306];
+          for (var i = 0; i < pillars.length; i++) {
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(pillars[i], 184, 18, 64);
+            // subtle 3D highlight
+            ctx.fillStyle = '#bae6fd';
+            ctx.fillRect(pillars[i] + 12, 184, 6, 64);
+          }
+
+          // Golden SEC Shield in center
+          ctx.fillStyle = '#f59e0b';
+          ctx.beginPath();
+          ctx.moveTo(256, 192);
+          ctx.lineTo(240, 202);
+          ctx.lineTo(240, 224);
+          ctx.quadraticCurveTo(240, 240, 256, 248);
+          ctx.quadraticCurveTo(272, 240, 272, 224);
+          ctx.lineTo(272, 202);
+          ctx.closePath();
+          ctx.fill();
+
+          // Foundation base steps
+          ctx.fillStyle = '#e0f2fe';
+          ctx.fillRect(166, 252, 180, 12);
+          ctx.fillStyle = '#bae6fd';
+          ctx.fillRect(156, 266, 200, 14);
+
+          // 5. Bold High-Contrast Typography: "SEC" and "TRACKER"
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '900 66px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('SEC', 256, 390);
+
+          ctx.fillStyle = '#38bdf8';
+          ctx.font = '800 28px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          ctx.letterSpacing = '4px';
+          ctx.fillText('TRACKER', 256, 442);
+
+          // Export high-resolution PNG data URL
+          var iconDataUrl = canvas.toDataURL('image/png');
+
+          // Dynamically bind to Apple touch icon links and favicon
+          var appleIcon = document.getElementById('appleTouchIcon');
+          var applePre = document.getElementById('appleTouchPrecomposed');
+          var fav = document.getElementById('appFavicon');
+          if (appleIcon) appleIcon.href = iconDataUrl;
+          if (applePre) applePre.href = iconDataUrl;
+          if (fav) fav.href = iconDataUrl;
+
+          // Update dynamic data URI manifest fallback
+          var manifestLink = document.getElementById('appManifest');
+          if (manifestLink) {
+            var manifestObj = {
+              id: "./",
+              name: "SEC Transactions Tracker",
+              short_name: "SEC Tracker",
+              start_url: "./",
+              scope: "./",
+              display: "standalone",
+              orientation: "any",
+              background_color: "#0f172a",
+              theme_color: "#0f172a",
+              description: "An offline-first corporate compliance and filing management application for Philippine SEC transactions, fees, itemized expenses, and balance tracking.",
+              icons: [
+                { src: iconDataUrl, sizes: "512x512", type: "image/png", purpose: "any" },
+                { src: iconDataUrl, sizes: "512x512", type: "image/png", purpose: "maskable" },
+                { src: iconDataUrl, sizes: "180x180", type: "image/png" }
+              ]
+            };
+            manifestLink.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj));
+          }
+        } catch (e) {
+          console.warn('Canvas PWA Icon initialization fallback:', e);
+        }
+      })();
+    </script>
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
