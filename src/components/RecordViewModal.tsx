@@ -287,7 +287,7 @@ export const RecordViewModal: React.FC<RecordViewModalProps> = ({
         {/* Modal Footer */}
         <div className="no-print flex items-center justify-between px-6 py-4 border-t border-slate-800 bg-slate-950/70">
           <span className="text-[11px] text-slate-400 font-mono">
-            ID: {record.id} · Updated: {formatDate(record.updatedAt.slice(0, 10))}
+            ID: {record.id} · Updated: {formatDate(typeof record.updatedAt === 'string' ? record.updatedAt.slice(0, 10) : undefined)}
           </span>
           <button
             type="button"

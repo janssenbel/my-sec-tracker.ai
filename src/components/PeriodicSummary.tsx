@@ -22,7 +22,7 @@ export const PeriodicSummary: React.FC<PeriodicSummaryProps> = ({ records }) => 
   const periodOptions = useMemo(() => {
     const set = new Set<string>();
     records.forEach(r => {
-      const date = r.dateFiled || r.createdAt.slice(0, 10);
+      const date = r.dateFiled || (typeof r.createdAt === 'string' ? r.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10));
       if (periodType === 'weekly') {
         set.add(getWeekKey(date));
       } else if (periodType === 'monthly') {
@@ -47,7 +47,7 @@ export const PeriodicSummary: React.FC<PeriodicSummaryProps> = ({ records }) => 
   const periodRecords = useMemo(() => {
     if (!currentPeriod || currentPeriod === 'None') return [];
     return records.filter(r => {
-      const date = r.dateFiled || r.createdAt.slice(0, 10);
+      const date = r.dateFiled || (typeof r.createdAt === 'string' ? r.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10));
       if (periodType === 'weekly') return getWeekKey(date) === currentPeriod;
       if (periodType === 'monthly') return getMonthKey(date) === currentPeriod;
       return getYearKey(date) === currentPeriod;

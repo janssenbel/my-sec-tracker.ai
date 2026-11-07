@@ -47,7 +47,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
   const filteredRecords = useMemo(() => {
     return records.filter(r => {
       // 1. Corporation filter from modal if active
-      if (preselectedFilter && r.corporationName.toLowerCase() !== preselectedFilter.toLowerCase()) {
+      if (preselectedFilter && (r.corporationName || '').toLowerCase() !== preselectedFilter.toLowerCase()) {
         return false;
       }
 

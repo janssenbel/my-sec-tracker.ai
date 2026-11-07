@@ -22,7 +22,7 @@ export const CorporationListModal: React.FC<CorporationListModalProps> = ({
     const map = new Map<string, SECTransaction[]>();
 
     records.forEach(r => {
-      const name = r.corporationName.trim();
+      const name = (r.corporationName || 'Unnamed Corporation').trim();
       const existing = map.get(name) || [];
       existing.push(r);
       map.set(name, existing);

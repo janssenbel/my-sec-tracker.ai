@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, Component, ErrorInfo, ReactNode } from 'react';
 import { Navbar } from './components/Navbar';
 import { StatCards } from './components/StatCards';
 import { PeriodicSummary } from './components/PeriodicSummary';
@@ -11,30 +11,97 @@ import { SECTransaction } from './types';
 import { 
   exportToCSV, 
   downloadJSONBackup, 
-  formatPeso, 
-  getRecordBalance 
+  normalizeRecord 
 } from './utils/formatters';
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Info, X, RefreshCw } from 'lucide-react';
 
 const STORAGE_KEY = 'sec_tracker_records_v1';
 const THEME_KEY = 'sec_tracker_theme';
 const AUTOBACKUP_KEY = 'sec_tracker_autobackup';
 
-export default function App() {
-  // 1. Records state initialized from localStorage
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('App Error Boundary caught an error:', error, errorInfo);
+  }
+
+  handleReset = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
+    window.location.reload();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 p-4">
+          <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center space-y-4 shadow-2xl">
+            <div className="w-12 h-12 rounded-xl bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h2 className="text-lg font-bold text-white">Something went wrong</h2>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              An unexpected error occurred while loading your SEC records. Your data can be recovered by reloading or resetting the local cache.
+            </p>
+            <div className="flex gap-2 justify-center pt-2">
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-1.5"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Reload App
+              </button>
+              <button
+                type="button"
+                onClick={this.handleReset}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold"
+              >
+                Reset Data
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function MainApp() {
+  // 1. Records state initialized safely from localStorage with universal normalization
   const [records, setRecords] = useState<SECTransaction[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          return parsed.map((item: any, idx: number) => normalizeRecord(item, `sec-stored-${idx}`));
+        } else if (parsed && Array.isArray(parsed.records) && parsed.records.length > 0) {
+          return parsed.records.map((item: any, idx: number) => normalizeRecord(item, `sec-stored-${idx}`));
         }
       }
     } catch (e) {
       console.error('Error loading stored SEC records:', e);
     }
-    return INITIAL_RECORDS;
+    return INITIAL_RECORDS.map((item, idx) => normalizeRecord(item, `sec-init-${idx}`));
   });
 
   // 2. Dark mode state
@@ -106,38 +173,40 @@ export default function App() {
 
   // Helper to persist records
   const persistRecords = (updated: SECTransaction[], shouldAutoBackup = false) => {
-    setRecords(updated);
+    const safeRecords = updated.map((r, idx) => normalizeRecord(r, `sec-${idx}`));
+    setRecords(safeRecords);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(safeRecords));
     } catch (e) {
       console.error('Failed to write to localStorage:', e);
     }
 
     if (shouldAutoBackup && autoBackup) {
       setTimeout(() => {
-        downloadJSONBackup(updated, true);
+        downloadJSONBackup(safeRecords, true);
       }, 300);
     }
   };
 
   // Save (Create or Update) Record
   const handleSaveRecord = (record: SECTransaction) => {
-    const existingIndex = records.findIndex(r => r.id === record.id);
+    const safeRecord = normalizeRecord(record);
+    const existingIndex = records.findIndex(r => r.id === safeRecord.id);
     let updated: SECTransaction[];
     if (existingIndex >= 0) {
       updated = [...records];
-      updated[existingIndex] = record;
-      showToast(`Updated transaction for ${record.corporationName}`);
+      updated[existingIndex] = safeRecord;
+      showToast(`Updated transaction for ${safeRecord.corporationName}`);
     } else {
-      updated = [record, ...records];
-      showToast(`Added new transaction for ${record.corporationName}`);
+      updated = [safeRecord, ...records];
+      showToast(`Added new transaction for ${safeRecord.corporationName}`);
     }
 
     persistRecords(updated, true);
     
     // Also update viewing record if currently open
-    if (viewingRecord && viewingRecord.id === record.id) {
-      setViewingRecord(record);
+    if (viewingRecord && viewingRecord.id === safeRecord.id) {
+      setViewingRecord(safeRecord);
     }
   };
 
@@ -162,12 +231,12 @@ export default function App() {
 
     const updated = records.map(r => {
       if (r.id === id) {
-        return {
+        return normalizeRecord({
           ...r,
           amountPaid: r.totalFee,
           isFullyPaid: true,
           updatedAt: new Date().toISOString()
-        };
+        });
       }
       return r;
     });
@@ -180,36 +249,53 @@ export default function App() {
     }
   };
 
-  // Restore from JSON
+  // Restore from JSON with universal format support & robust normalization
   const handleRestoreBackup = (file: File) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
         const text = event.target?.result as string;
-        const parsed = JSON.parse(text);
-
-        let recordsToLoad: SECTransaction[] = [];
-        if (Array.isArray(parsed)) {
-          recordsToLoad = parsed;
-        } else if (parsed && Array.isArray(parsed.records)) {
-          recordsToLoad = parsed.records;
-        } else {
-          throw new Error('Invalid backup file format');
+        if (!text || !text.trim()) {
+          showToast('The selected file is empty.', 'error');
+          return;
         }
 
-        if (recordsToLoad.length === 0) {
+        const parsed = JSON.parse(text);
+
+        let rawList: any[] = [];
+        if (Array.isArray(parsed)) {
+          rawList = parsed;
+        } else if (parsed && Array.isArray(parsed.records)) {
+          rawList = parsed.records;
+        } else if (parsed && typeof parsed === 'object') {
+          // Check if object values are records
+          const values = Object.values(parsed);
+          if (values.length > 0 && typeof values[0] === 'object') {
+            rawList = values;
+          }
+        }
+
+        if (rawList.length === 0) {
           showToast('The backup file contained no transactions.', 'error');
           return;
         }
 
-        if (window.confirm(`Restore ${recordsToLoad.length} transactions from backup file "${file.name}"? This will replace your current records.`)) {
-          persistRecords(recordsToLoad, false);
-          showToast(`Successfully restored ${recordsToLoad.length} transactions!`, 'success');
+        // Sanitize every record through normalizeRecord
+        const normalized = rawList.map((item: any, idx: number) => 
+          normalizeRecord(item, `sec-restored-${Date.now()}-${idx}`)
+        );
+
+        if (window.confirm(`Found ${normalized.length} transaction record(s) in "${file.name}". Restore and load them now? This will replace your current records.`)) {
+          persistRecords(normalized, false);
+          showToast(`Successfully restored ${normalized.length} transactions!`, 'success');
         }
       } catch (err) {
         console.error('Restore error:', err);
-        showToast('Failed to parse backup file. Please select a valid SEC Tracker JSON file.', 'error');
+        showToast('Failed to parse backup file. Please select a valid JSON backup file.', 'error');
       }
+    };
+    reader.onerror = () => {
+      showToast('Error reading the selected file.', 'error');
     };
     reader.readAsText(file);
   };
@@ -217,7 +303,11 @@ export default function App() {
   // Existing unique corporation names for autocomplete suggestions
   const existingCorporations = useMemo(() => {
     const set = new Set<string>();
-    records.forEach(r => set.add(r.corporationName.trim()));
+    records.forEach(r => {
+      if (r.corporationName) {
+        set.add(r.corporationName.trim());
+      }
+    });
     return Array.from(set).sort();
   }, [records]);
 
@@ -263,7 +353,7 @@ export default function App() {
       />
 
       {/* Main Workspace Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
         
         {/* KPI Stat Cards */}
         <StatCards
@@ -342,5 +432,13 @@ export default function App() {
       />
 
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <MainApp />
+    </ErrorBoundary>
   );
 }

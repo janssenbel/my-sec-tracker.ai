@@ -69,7 +69,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setTotalFee(initialRecord.totalFee);
       setAmountPaid(initialRecord.amountPaid);
       setIsFullyPaid(initialRecord.isFullyPaid);
-      setExpenses(initialRecord.expenses ? [...initialRecord.expenses] : []);
+      setExpenses(Array.isArray(initialRecord.expenses) ? [...initialRecord.expenses] : []);
       setNotes(initialRecord.notes || '');
       setErrorMessage('');
     } else {
