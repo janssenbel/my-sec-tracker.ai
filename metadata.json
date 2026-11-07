@@ -1,0 +1,6 @@
+{
+  "name": "SEC Transactions Tracker",
+  "description": "An offline-first corporate compliance and filing management application for Philippine SEC transactions, fees, itemized expenses, and balance tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
