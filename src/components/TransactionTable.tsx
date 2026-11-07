@@ -1,22 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Search, 
-  Filter, 
   Eye, 
   Edit3, 
   Trash2, 
   Check, 
   Calendar, 
-  Receipt,
-  FileCheck2,
-  TrendingUp,
-  AlertCircle
+  FileCheck2
 } from 'lucide-react';
-import { SECTransaction, TransactionStatus } from '../types';
+import { SECTransaction, STANDARD_STATUSES } from '../types';
 import { 
   formatPeso, 
   formatDate, 
   getRecordBalance, 
+  getRecordTotalPaid,
   getRecordTotalExpenses, 
   getRecordNetProfit 
 } from '../utils/formatters';
@@ -42,8 +39,9 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed'>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('All');
 
-  // Filter records based on tab, search query, and preselectedFilter (e.g. corporation name from corporations modal)
+  // Filter records based on tab, specific status filter, search query, and preselectedFilter
   const filteredRecords = useMemo(() => {
     return records.filter(r => {
       // 1. Corporation filter from modal if active
@@ -51,81 +49,136 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
         return false;
       }
 
+      const statusVal = (r.status || '').trim();
+      const isCompleted = statusVal.toLowerCase() === 'completed';
+
       // 2. Tab filter
-      if (activeTab === 'active') {
-        const isActive = r.status === 'In Progress' || r.status === 'Pending' || r.status === 'Under Review' || r.status === 'For Release';
-        if (!isActive) return false;
-      } else if (activeTab === 'completed') {
-        if (r.status !== 'Completed') return false;
+      if (activeTab === 'active' && isCompleted) {
+        return false;
+      } else if (activeTab === 'completed' && !isCompleted) {
+        return false;
       }
 
-      // 3. Search query
+      // 3. Specific Current Status dropdown filter
+      if (statusFilter !== 'All') {
+        if (statusFilter === 'Others') {
+          const isStandard = STANDARD_STATUSES.some(
+            s => s.toLowerCase() === statusVal.toLowerCase() ||
+                 s.replace(/\s*\/\s*/g, '/').toLowerCase() === statusVal.replace(/\s*\/\s*/g, '/').toLowerCase()
+          );
+          if (isStandard) return false;
+        } else {
+          const normFilter = statusFilter.replace(/\s*\/\s*/g, '/').toLowerCase();
+          const normRecord = statusVal.replace(/\s*\/\s*/g, '/').toLowerCase();
+          if (normFilter !== normRecord) return false;
+        }
+      }
+
+      // 4. Search query
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase();
-        const matchesName = r.corporationName.toLowerCase().includes(q);
-        const matchesType = r.filingType.toLowerCase().includes(q);
-        const matchesTracking = r.trackingNumber.toLowerCase().includes(q);
+        const isPaid = r.isFullyPaid || getRecordBalance(r) === 0;
+        const paidStatusStr = isPaid ? 'fully paid paid settled' : 'unpaid balance balance due';
+        const expenseSearchStr = Array.isArray(r.expenses)
+          ? r.expenses.map(e => e.description).join(' ').toLowerCase()
+          : '';
+
+        const matchesName = (r.corporationName || '').toLowerCase().includes(q);
+        const matchesType = (r.filingType || '').toLowerCase().includes(q);
+        const matchesStatus = statusVal.toLowerCase().includes(q);
         const matchesNotes = (r.notes || '').toLowerCase().includes(q);
-        if (!matchesName && !matchesType && !matchesTracking && !matchesNotes) {
+        const matchesPaid = paidStatusStr.includes(q);
+        const matchesExpenses = expenseSearchStr.includes(q);
+
+        if (!matchesName && !matchesType && !matchesStatus && !matchesNotes && !matchesPaid && !matchesExpenses) {
           return false;
         }
       }
 
       return true;
     });
-  }, [records, activeTab, searchQuery, preselectedFilter]);
+  }, [records, activeTab, statusFilter, searchQuery, preselectedFilter]);
 
   // Tab counts
   const allCount = records.length;
-  const activeCount = records.filter(
-    r => r.status === 'In Progress' || r.status === 'Pending' || r.status === 'Under Review' || r.status === 'For Release'
-  ).length;
-  const completedCount = records.filter(r => r.status === 'Completed').length;
+  const completedCount = records.filter(r => (r.status || '').trim().toLowerCase() === 'completed').length;
+  const activeCount = allCount - completedCount;
 
-  const getStatusBadge = (status: TransactionStatus) => {
-    switch (status) {
-      case 'Completed':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-800/60">
-            <Check className="w-3 h-3" /> Completed
-          </span>
-        );
-      case 'In Progress':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-amber-950/80 text-amber-400 border border-amber-800/60">
-            In Progress
-          </span>
-        );
-      case 'Under Review':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-blue-950/80 text-blue-400 border border-blue-800/60">
-            Under Review
-          </span>
-        );
-      case 'For Release':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-purple-950/80 text-purple-400 border border-purple-800/60">
-            For Release
-          </span>
-        );
-      case 'Pending':
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
-            Pending
-          </span>
-        );
+  const getStatusBadge = (status: string) => {
+    const s = (status || 'Unspecified').trim();
+    const lower = s.toLowerCase();
+
+    if (lower === 'completed') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-800/60">
+          <Check className="w-3 h-3" /> {s}
+        </span>
+      );
     }
+    if (lower === 'for preparation of documents') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-blue-950/80 text-blue-400 border border-blue-800/60">
+          {s}
+        </span>
+      );
+    }
+    if (lower === 'for signing of documents') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-indigo-950/80 text-indigo-400 border border-indigo-800/60">
+          {s}
+        </span>
+      );
+    }
+    if (lower === 'for review') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-amber-950/80 text-amber-400 border border-amber-800/60">
+          {s}
+        </span>
+      );
+    }
+    if (lower === 'for payment') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-orange-950/80 text-orange-400 border border-orange-800/60">
+          {s}
+        </span>
+      );
+    }
+    if (lower.includes('approved') && lower.includes('hard copies')) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-cyan-950/80 text-cyan-400 border border-cyan-800/60">
+          {s}
+        </span>
+      );
+    }
+    if (lower.includes('submitted') || lower.includes('awaiting certificate')) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-purple-950/80 text-purple-400 border border-purple-800/60">
+          {s}
+        </span>
+      );
+    }
+    if (lower === 'for compliance of client') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-rose-950/80 text-rose-400 border border-rose-800/60">
+          {s}
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
+        {s}
+      </span>
+    );
   };
 
   return (
     <div className="rounded-xl bg-slate-900/90 dark:bg-slate-900/90 border border-slate-800 overflow-hidden shadow-sm">
       
-      {/* Header Bar with Search & Filter Tabs */}
-      <div className="p-4 border-b border-slate-800 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      {/* Header Bar with Search, Status Dropdown & Filter Tabs */}
+      <div className="p-4 border-b border-slate-800 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
         
         {/* Filter Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-slate-950/80 rounded-lg border border-slate-800 text-xs">
+        <div className="flex items-center gap-1 p-1 bg-slate-950/80 rounded-lg border border-slate-800 text-xs overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab('all')}
@@ -177,25 +230,48 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
           </div>
         )}
 
-        {/* Search Bar */}
-        <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search corporation, filing, or tracking..."
-            className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
-            >
-              ×
-            </button>
-          )}
+        {/* Right Side: Current Status Dropdown + Search Input */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          
+          {/* Current Status Filter Select */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-slate-950/80 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            title="Filter by Current Status"
+          >
+            <option value="All">All Statuses</option>
+            <option value="For Preparation of Documents">For Preparation of Documents</option>
+            <option value="For Signing of Documents">For Signing of Documents</option>
+            <option value="For Review">For Review</option>
+            <option value="For Payment">For Payment</option>
+            <option value="Approved / For Submission of Hard Copies">Approved / For Submission of Hard Copies</option>
+            <option value="Submitted / Awaiting Certificate">Submitted / Awaiting Certificate</option>
+            <option value="Completed">Completed</option>
+            <option value="For Compliance of Client">For Compliance of Client</option>
+            <option value="Others">Others</option>
+          </select>
+
+          {/* Search Bar */}
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search corporation, status, expenses..."
+              className="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
 
       </div>
@@ -205,13 +281,13 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
         <table className="w-full text-left border-collapse text-xs">
           <thead>
             <tr className="bg-slate-950/70 border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
-              <th className="py-3 px-4">Corporation / Entity</th>
-              <th className="py-3 px-4">Filing Type & Tracking</th>
-              <th className="py-3 px-4">Status</th>
-              <th className="py-3 px-4">Target Date</th>
+              <th className="py-3 px-4">Corporation Name</th>
+              <th className="py-3 px-4">Type of Transaction</th>
+              <th className="py-3 px-4">Dates (Accepted &amp; DP &rarr; Started &rarr; Completed)</th>
               <th className="py-3 px-4 text-right">Fee / Balance</th>
               <th className="py-3 px-4 text-right">Expenses</th>
               <th className="py-3 px-4 text-right">Net Profit</th>
+              <th className="py-3 px-4 text-center">Current Status</th>
               <th className="py-3 px-4 text-center">Actions</th>
             </tr>
           </thead>
@@ -229,6 +305,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
             ) : (
               filteredRecords.map((r) => {
                 const balance = getRecordBalance(r);
+                const totalPaid = getRecordTotalPaid(r);
                 const totalExpenses = getRecordTotalExpenses(r);
                 const netProfit = getRecordNetProfit(r);
 
@@ -247,39 +324,40 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                       </div>
                     </td>
 
-                    {/* Filing Type & Tracking Number */}
+                    {/* Type of Transaction */}
                     <td className="py-3.5 px-4">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-medium text-slate-200">{r.filingType}</span>
-                        <span className="text-[11px] font-mono text-slate-400">
-                          {r.trackingNumber}
-                        </span>
+                      <span className="font-medium text-slate-200">{r.filingType}</span>
+                    </td>
+
+                    {/* Chronological Dates: Accepted & DP, Started, Completed */}
+                    <td className="py-3.5 px-4 font-mono tabular-nums text-[11px] text-slate-300 space-y-0.5">
+                      <div>
+                        <span className="text-slate-400 font-sans font-medium">Accepted &amp; DP: </span>
+                        <span className="text-white">{formatDate(r.dateAccepted)}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 font-sans font-medium">Started: </span>
+                        <span>{formatDate(r.dateStarted)}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 font-sans font-medium">Completed: </span>
+                        <span className={r.dateCompleted ? 'text-emerald-400' : ''}>{formatDate(r.dateCompleted)}</span>
                       </div>
                     </td>
 
-                    {/* Status Badge */}
-                    <td className="py-3.5 px-4">
-                      {getStatusBadge(r.status)}
-                    </td>
-
-                    {/* Target Date */}
-                    <td className="py-3.5 px-4 font-mono tabular-nums text-slate-300">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{formatDate(r.targetDate)}</span>
-                      </div>
-                    </td>
-
-                    {/* Fee & Balance */}
+                    {/* Fee, Paid & Balance */}
                     <td className="py-3.5 px-4 text-right font-mono tabular-nums">
                       <div className="text-white font-medium">{formatPeso(r.totalFee)}</div>
+                      <div className="text-[11px] text-cyan-400">
+                        Paid: {formatPeso(totalPaid)}
+                      </div>
                       {balance > 0 ? (
                         <div className="text-[11px] text-rose-400 font-semibold">
                           Bal: {formatPeso(balance)}
                         </div>
                       ) : (
-                        <div className="text-[11px] text-emerald-400">
-                          Paid in Full
+                        <div className="text-[11px] text-emerald-400 font-semibold">
+                          ✔ PAID
                         </div>
                       )}
                     </td>
@@ -299,6 +377,11 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                       <span className={netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
                         {formatPeso(netProfit)}
                       </span>
+                    </td>
+
+                    {/* Current Status Badge */}
+                    <td className="py-3.5 px-4 text-center">
+                      {getStatusBadge(r.status)}
                     </td>
 
                     {/* Actions */}
@@ -368,6 +451,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
         ) : (
           filteredRecords.map((r) => {
             const balance = getRecordBalance(r);
+            const totalPaid = getRecordTotalPaid(r);
             const totalExpenses = getRecordTotalExpenses(r);
             const netProfit = getRecordNetProfit(r);
 
@@ -376,21 +460,40 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h3 className="text-sm font-semibold text-white">{r.corporationName}</h3>
-                    <p className="text-xs text-slate-300 font-medium">{r.filingType}</p>
-                    <p className="text-[11px] font-mono text-slate-400">{r.trackingNumber}</p>
+                    <p className="text-xs text-blue-300 font-medium">{r.filingType}</p>
                   </div>
-                  <div>{getStatusBadge(r.status)}</div>
+                  <div className="shrink-0">{getStatusBadge(r.status)}</div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs py-1 border-y border-slate-800/60">
+                {/* Dates Row on Mobile */}
+                <div className="grid grid-cols-3 gap-2 text-[11px] bg-slate-950/50 p-2.5 rounded-lg border border-slate-800/70">
                   <div>
-                    <span className="text-[10px] text-slate-400 block">Total Fee</span>
+                    <span className="text-[10px] text-slate-400 block">Accepted &amp; DP</span>
+                    <span className="font-mono text-slate-200">{formatDate(r.dateAccepted)}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Started</span>
+                    <span className="font-mono text-slate-200">{formatDate(r.dateStarted)}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Completed</span>
+                    <span className={`font-mono ${r.dateCompleted ? 'text-emerald-400' : 'text-slate-400'}`}>
+                      {formatDate(r.dateCompleted)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Financials Grid on Mobile */}
+                <div className="grid grid-cols-2 gap-2 text-xs py-1.5 border-y border-slate-800/60">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Assistance Fee / Paid</span>
                     <span className="font-mono tabular-nums text-white font-medium">{formatPeso(r.totalFee)}</span>
+                    <span className="text-[10px] font-mono text-cyan-400 block">Paid: {formatPeso(totalPaid)}</span>
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] text-slate-400 block">Balance</span>
                     <span className={`font-mono tabular-nums font-semibold ${balance > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                      {balance > 0 ? formatPeso(balance) : 'Paid in Full'}
+                      {balance > 0 ? formatPeso(balance) : '✔ Paid in Full'}
                     </span>
                   </div>
                   <div>
@@ -408,7 +511,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                 <div className="flex items-center justify-between pt-1">
                   <div className="flex items-center gap-1 text-[11px] font-mono text-slate-400">
                     <Calendar className="w-3 h-3 text-slate-400" />
-                    <span>Target: {formatDate(r.targetDate)}</span>
+                    <span>Accepted: {formatDate(r.dateAccepted)}</span>
                   </div>
 
                   <div className="flex items-center gap-1.5">

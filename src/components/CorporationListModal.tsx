@@ -32,10 +32,10 @@ export const CorporationListModal: React.FC<CorporationListModalProps> = ({
 
     map.forEach((corpRecords, name) => {
       const totalFilings = corpRecords.length;
-      const activeFilings = corpRecords.filter(
-        r => r.status === 'In Progress' || r.status === 'Pending' || r.status === 'Under Review' || r.status === 'For Release'
+      const completedFilings = corpRecords.filter(
+        r => (r.status || '').trim().toLowerCase() === 'completed'
       ).length;
-      const completedFilings = corpRecords.filter(r => r.status === 'Completed').length;
+      const activeFilings = totalFilings - completedFilings;
 
       // Filter by active if filterType === 'active'
       if (filterType === 'active' && activeFilings === 0) {

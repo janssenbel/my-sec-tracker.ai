@@ -19,11 +19,11 @@ interface StatCardsProps {
 export const StatCards: React.FC<StatCardsProps> = ({ records, onOpenCorporationsModal }) => {
   const totalRecords = records.length;
   
-  const inProgressRecords = records.filter(
-    r => r.status === 'In Progress' || r.status === 'Pending' || r.status === 'Under Review' || r.status === 'For Release'
+  const completedRecords = records.filter(
+    r => (r.status || '').trim().toLowerCase() === 'completed'
   ).length;
-
-  const completedRecords = records.filter(r => r.status === 'Completed').length;
+  
+  const inProgressRecords = totalRecords - completedRecords;
 
   const totalUncollectedBalance = records.reduce((sum, r) => sum + getRecordBalance(r), 0);
 

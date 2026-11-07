@@ -1,4 +1,4 @@
-import { SECTransaction, TransactionStatus, ExpenseItem } from '../types';
+import { SECTransaction, ExpenseItem } from '../types';
 
 export function formatPeso(amount: number): string {
   const safeAmount = isNaN(amount) ? 0 : Number(amount);
@@ -11,7 +11,7 @@ export function formatPeso(amount: number): string {
 }
 
 export function formatDate(dateStr?: string): string {
-  if (!dateStr || typeof dateStr !== 'string') return '—';
+  if (!dateStr || typeof dateStr !== 'string' || !dateStr.trim()) return '—';
   try {
     const parts = dateStr.slice(0, 10).split('-');
     if (parts.length === 3) {
@@ -42,20 +42,72 @@ export function formatDate(dateStr?: string): string {
 }
 
 /**
+ * Normalizes status strings to canonical Current Status labels while
+ * preserving any custom "Others" status string entered by the user.
+ */
+export function normalizeStatus(rawStatus: string): string {
+  const trimmed = (rawStatus || '').trim();
+  if (!trimmed) return 'For Preparation of Documents';
+
+  const lower = trimmed.toLowerCase();
+  if (lower === 'for preparation of documents' || lower === 'pending') {
+    return 'For Preparation of Documents';
+  }
+  if (lower === 'for signing of documents') {
+    return 'For Signing of Documents';
+  }
+  if (lower === 'for review' || lower === 'under review') {
+    return 'For Review';
+  }
+  if (lower === 'for payment') {
+    return 'For Payment';
+  }
+  if (
+    lower === 'approved / for submission of hard copies' ||
+    lower === 'approved/ for submission of hard copies' ||
+    lower === 'approved/for submission of hard copies'
+  ) {
+    return 'Approved / For Submission of Hard Copies';
+  }
+  if (
+    lower === 'submitted / awaiting certificate' ||
+    lower === 'submitted/ awaiting certificate' ||
+    lower === 'for release'
+  ) {
+    return 'Submitted / Awaiting Certificate';
+  }
+  if (lower === 'completed' || lower === 'done' || lower === 'finished') {
+    return 'Completed';
+  }
+  if (lower === 'for compliance of client') {
+    return 'For Compliance of Client';
+  }
+  if (lower === 'in progress') {
+    return 'For Preparation of Documents';
+  }
+  // Return custom status as-is
+  return trimmed;
+}
+
+/**
  * Universal record normalizer that converts any legacy or current record
  * into a safe, valid SECTransaction object without throwing runtime errors.
  */
 export function normalizeRecord(raw: any, fallbackId?: string): SECTransaction {
   if (!raw || typeof raw !== 'object') {
+    const today = new Date().toISOString().slice(0, 10);
     return {
       id: fallbackId || `sec-${Date.now()}`,
       corporationName: 'Unknown Corporation',
-      filingType: 'General Compliance Filing',
-      trackingNumber: `SEC-${Date.now()}`,
-      status: 'Pending',
-      dateFiled: new Date().toISOString().slice(0, 10),
-      targetDate: new Date().toISOString().slice(0, 10),
+      filingType: 'Registration',
+      status: 'For Preparation of Documents',
+      dateAccepted: today,
+      dateStarted: '',
+      dateCompleted: '',
       totalFee: 0,
+      initialPayment: 0,
+      finalPayment: 0,
+      dateFullyPaid: '',
       amountPaid: 0,
       isFullyPaid: false,
       expenses: [],
@@ -72,45 +124,35 @@ export function normalizeRecord(raw: any, fallbackId?: string): SECTransaction {
 
   // 2. Filing type mapping
   const filingType = String(
-    raw.filingType || raw.transType || raw.transactionType || raw.type || 'General Compliance Filing'
+    raw.filingType || raw.transType || raw.transactionType || raw.type || 'Registration'
   ).trim();
 
-  // 3. Tracking number mapping
-  const trackingNumber = String(
-    raw.trackingNumber || raw.tracking || raw.ref || raw.referenceNumber || `SEC-${raw.id || Date.now()}`
-  ).trim();
+  // 3. Current Status mapping (preserves custom statuses and normalizes standard ones)
+  const status = normalizeStatus(String(raw.currentStatus || raw.status || 'For Preparation of Documents'));
 
-  // 4. Status mapping
-  const rawStatus = String(raw.status || raw.currentStatus || 'In Progress').trim();
-  let status: TransactionStatus = 'In Progress';
-  if (/complete|done|finish/i.test(rawStatus)) {
-    status = 'Completed';
-  } else if (/review/i.test(rawStatus)) {
-    status = 'Under Review';
-  } else if (/release/i.test(rawStatus)) {
-    status = 'For Release';
-  } else if (/pending/i.test(rawStatus)) {
-    status = 'Pending';
-  } else {
-    status = 'In Progress';
-  }
-
-  // 5. Dates
+  // 4. Chronological Dates: Date Accepted & Downpayment, Date Started, Date Completed
   const today = new Date().toISOString().slice(0, 10);
-  const dateFiled = String(raw.dateFiled || raw.dateAccepted || raw.dateStarted || today).slice(0, 10);
-  const targetDate = String(
-    raw.targetDate || raw.dateTarget || raw.targetCompletion || raw.dateCompleted || raw.dateStarted || today
-  ).slice(0, 10);
-  const dateCompleted = raw.dateCompleted || raw.finishedDate || raw.dateFullyPaid || undefined;
+  const rawAccepted = raw.dateAccepted || raw.dateFiled || today;
+  const dateAccepted = rawAccepted ? String(rawAccepted).slice(0, 10) : today;
 
-  // 6. Fees and Collections
+  const rawStarted = raw.dateStarted || '';
+  const dateStarted = rawStarted ? String(rawStarted).slice(0, 10) : '';
+
+  const rawCompleted = raw.dateCompleted || raw.finishedDate || '';
+  const dateCompleted = rawCompleted ? String(rawCompleted).slice(0, 10) : '';
+
+  // 5. Fees and Collections
   const totalFee = Number(raw.totalFee ?? raw.fee ?? raw.assistanceFee ?? 0) || 0;
-  let amountPaid = Number(raw.amountPaid);
-  if (isNaN(amountPaid)) {
-    const initial = Number(raw.initialPayment) || 0;
-    const finalPay = Number(raw.finalPayment) || 0;
-    amountPaid = initial + finalPay;
-  }
+  const hasInitial = raw.initialPayment !== undefined && raw.initialPayment !== null;
+  const hasFinal = raw.finalPayment !== undefined && raw.finalPayment !== null;
+
+  let initialPayment = hasInitial ? (Number(raw.initialPayment) || 0) : (Number(raw.amountPaid) || 0);
+  let finalPayment = hasFinal ? (Number(raw.finalPayment) || 0) : 0;
+
+  let amountPaid = hasInitial || hasFinal
+    ? initialPayment + finalPayment
+    : (Number(raw.amountPaid) || 0);
+
   if (isNaN(amountPaid)) amountPaid = 0;
 
   const isFullyPaid = Boolean(
@@ -119,12 +161,15 @@ export function normalizeRecord(raw: any, fallbackId?: string): SECTransaction {
     (totalFee > 0 && amountPaid >= totalFee)
   );
 
-  // If marked fully paid but amountPaid < totalFee, sync amountPaid
   if (isFullyPaid && amountPaid < totalFee) {
+    finalPayment = Math.max(0, totalFee - initialPayment);
     amountPaid = totalFee;
   }
 
-  // 7. Itemized Expenses & Disbursements
+  const rawDateFullyPaid = raw.dateFullyPaid || '';
+  const dateFullyPaid = rawDateFullyPaid ? String(rawDateFullyPaid).slice(0, 10) : '';
+
+  // 6. Itemized Expenses & Disbursements
   let expenses: ExpenseItem[] = [];
   if (Array.isArray(raw.expenses)) {
     expenses = raw.expenses.map((e: any, idx: number) => ({
@@ -149,15 +194,17 @@ export function normalizeRecord(raw: any, fallbackId?: string): SECTransaction {
   }
 
   return {
-    id: String(raw.id || fallbackId || `sec-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`),
+    id: String(raw.id || fallbackId || `SEC-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`),
     corporationName,
     filingType,
-    trackingNumber,
     status,
-    dateFiled,
-    targetDate,
-    dateCompleted: dateCompleted ? String(dateCompleted).slice(0, 10) : undefined,
+    dateAccepted,
+    dateStarted,
+    dateCompleted: dateCompleted || undefined,
     totalFee,
+    initialPayment,
+    finalPayment,
+    dateFullyPaid: dateFullyPaid || undefined,
     amountPaid,
     isFullyPaid,
     expenses,
@@ -181,11 +228,25 @@ export function getRecordTotalExpenses(record: any): number {
   return 0;
 }
 
+export function getRecordTotalPaid(record: any): number {
+  if (!record) return 0;
+  const fee = Number(record.totalFee ?? record.fee ?? 0) || 0;
+  if (record.isFullyPaid && fee > 0) {
+    const explicitPaid = Number(
+      record.amountPaid ?? ((Number(record.initialPayment) || 0) + (Number(record.finalPayment) || 0))
+    ) || 0;
+    return Math.max(fee, explicitPaid);
+  }
+  return Number(
+    record.amountPaid ?? ((Number(record.initialPayment) || 0) + (Number(record.finalPayment) || 0))
+  ) || 0;
+}
+
 export function getRecordBalance(record: any): number {
   if (!record) return 0;
   if (record.isFullyPaid) return 0;
   const fee = Number(record.totalFee ?? record.fee ?? 0) || 0;
-  const paid = Number(record.amountPaid ?? ((Number(record.initialPayment) || 0) + (Number(record.finalPayment) || 0))) || 0;
+  const paid = getRecordTotalPaid(record);
   return Math.max(0, fee - paid);
 }
 
@@ -232,20 +293,22 @@ export function exportToCSV(records: SECTransaction[]): void {
   }
 
   const headers = [
-    'Record ID',
-    'Corporation / Entity Name',
-    'Filing / Transaction Type',
-    'Tracking / Ref Number',
-    'Status',
-    'Date Filed',
-    'Target Date',
+    'Corporation Name',
+    'Transaction Type',
+    'Date Accepted & Downpayment',
+    'Date Started',
     'Date Completed',
-    'Total Service Fee (PHP)',
-    'Amount Paid (PHP)',
-    'Uncollected Balance (PHP)',
+    'Assistance Fee (PHP)',
+    'Initial Payment (PHP)',
+    'Final Payment (PHP)',
+    'Total Paid (PHP)',
+    'Date Fully Paid',
+    'Balance (PHP)',
+    'Payment Status',
     'Total Expenses (PHP)',
-    'Net Margin / Profit (PHP)',
     'Itemized Expenses Breakdown',
+    'Net Profit (PHP)',
+    'Current Status',
     'Notes'
   ];
 
@@ -258,27 +321,31 @@ export function exportToCSV(records: SECTransaction[]): void {
   const rows = records.map(r => {
     const norm = normalizeRecord(r);
     const totalExpenses = getRecordTotalExpenses(norm);
+    const totalPaid = getRecordTotalPaid(norm);
     const balance = getRecordBalance(norm);
     const netProfit = getRecordNetProfit(norm);
+    const isPaid = norm.isFullyPaid || balance === 0;
     const expenseBreakdown = (norm.expenses || [])
       .map(e => `${e.description}: ₱${Number(e.amount).toFixed(2)}`)
       .join('; ');
 
     return [
-      escapeCSV(norm.id),
       escapeCSV(norm.corporationName),
       escapeCSV(norm.filingType),
-      escapeCSV(norm.trackingNumber),
-      escapeCSV(norm.status),
-      escapeCSV(norm.dateFiled),
-      escapeCSV(norm.targetDate),
-      escapeCSV(norm.dateCompleted || 'N/A'),
+      escapeCSV(norm.dateAccepted || ''),
+      escapeCSV(norm.dateStarted || ''),
+      escapeCSV(norm.dateCompleted || ''),
       escapeCSV(norm.totalFee.toFixed(2)),
-      escapeCSV(norm.amountPaid.toFixed(2)),
+      escapeCSV((norm.initialPayment ?? norm.amountPaid).toFixed(2)),
+      escapeCSV((norm.finalPayment ?? 0).toFixed(2)),
+      escapeCSV(totalPaid.toFixed(2)),
+      escapeCSV(norm.dateFullyPaid || ''),
       escapeCSV(balance.toFixed(2)),
+      escapeCSV(isPaid ? 'Fully Paid' : 'With Balance'),
       escapeCSV(totalExpenses.toFixed(2)),
-      escapeCSV(netProfit.toFixed(2)),
       escapeCSV(expenseBreakdown),
+      escapeCSV(netProfit.toFixed(2)),
+      escapeCSV(norm.status),
       escapeCSV(norm.notes || '')
     ].join(',');
   });
@@ -297,22 +364,25 @@ export function exportToCSV(records: SECTransaction[]): void {
 }
 
 export function downloadJSONBackup(records: SECTransaction[], isAuto = false): void {
-  const normalizedRecords = (records || []).map(r => normalizeRecord(r));
-  const exportData = {
-    version: '1.0',
-    exportDate: new Date().toISOString(),
-    application: 'SEC Transactions Tracker',
-    isAutoBackup: isAuto,
-    totalCount: normalizedRecords.length,
-    records: normalizedRecords
-  };
+  const normalizedRecords = (records || []).map(r => {
+    const norm = normalizeRecord(r);
+    // Include both legacy and current field keys so backup is 100% compatible everywhere
+    return {
+      ...norm,
+      corpName: norm.corporationName,
+      transType: norm.filingType,
+      currentStatus: norm.status,
+      fee: norm.totalFee,
+      expenseItems: norm.expenses
+    };
+  });
 
-  const jsonString = JSON.stringify(exportData, null, 2);
+  const jsonString = JSON.stringify(normalizedRecords, null, 2);
   const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const prefix = isAuto ? 'SEC_AutoBackup' : 'SEC_Transactions_Backup';
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const prefix = isAuto ? 'SEC_Tracker_AutoBackup' : 'SEC_Tracker_Backup';
   link.setAttribute('href', url);
   link.setAttribute('download', `${prefix}_${timestamp}.json`);
   document.body.appendChild(link);

@@ -4,23 +4,31 @@ export interface ExpenseItem {
   amount: number;
 }
 
-export type TransactionStatus = 
-  | 'Pending' 
-  | 'In Progress' 
-  | 'Under Review' 
-  | 'For Release' 
-  | 'Completed';
+export const STANDARD_STATUSES = [
+  'For Preparation of Documents',
+  'For Signing of Documents',
+  'For Review',
+  'For Payment',
+  'Approved / For Submission of Hard Copies',
+  'Submitted / Awaiting Certificate',
+  'Completed',
+  'For Compliance of Client'
+] as const;
+
+export type TransactionStatus = string;
 
 export interface SECTransaction {
   id: string;
   corporationName: string;
   filingType: string;
-  trackingNumber: string;
-  status: TransactionStatus;
-  dateFiled: string;
-  targetDate: string;
+  status: string;
+  dateAccepted: string;
+  dateStarted: string;
   dateCompleted?: string;
   totalFee: number;
+  initialPayment?: number;
+  finalPayment?: number;
+  dateFullyPaid?: string;
   amountPaid: number;
   isFullyPaid: boolean;
   expenses: ExpenseItem[];
@@ -29,7 +37,7 @@ export interface SECTransaction {
   updatedAt: string;
 }
 
-export type SummaryPeriodType = 'weekly' | 'monthly' | 'yearly';
+export type SummaryPeriodType = 'all' | 'weekly' | 'monthly' | 'yearly';
 
 export interface CorporationSummary {
   name: string;
@@ -44,18 +52,18 @@ export interface CorporationSummary {
 }
 
 export const SEC_FILING_TYPES = [
+  'Registration',
+  'Amendment',
+  'Increase of Authorized Capital Stock',
   'General Information Sheet (GIS)',
   'MC28 Electronic Mail & Contact Compliance',
-  'Articles of Incorporation & By-Laws Amendment',
-  'SEC New Corporation Registration',
   'Audited Financial Statements (AFS) Filing',
-  'Increase of Authorized Capital Stock',
   'SEC Certificate of Monitoring & Good Standing',
   'Application for Corporate Dissolution',
   'Notice of Appointment of Officers',
   'Foreign Corporation License & Branch Registration',
   'Petition for Lifting of Suspension / Revocation',
-  'Other Corporate Compliance Filing'
+  'Others'
 ] as const;
 
 export const STANDARD_EXPENSE_PRESETS = [

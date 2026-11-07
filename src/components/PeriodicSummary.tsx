@@ -4,6 +4,7 @@ import { SECTransaction, SummaryPeriodType } from '../types';
 import { 
   formatPeso, 
   getRecordBalance, 
+  getRecordTotalPaid,
   getRecordTotalExpenses, 
   getWeekKey, 
   getMonthKey, 
@@ -15,14 +16,15 @@ interface PeriodicSummaryProps {
 }
 
 export const PeriodicSummary: React.FC<PeriodicSummaryProps> = ({ records }) => {
-  const [periodType, setPeriodType] = useState<SummaryPeriodType>('monthly');
+  const [periodType, setPeriodType] = useState<SummaryPeriodType>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('');
 
-  // Extract all unique period options for current periodType
+  // Extract all unique period options for current periodType based on Date Accepted & Downpayment
   const periodOptions = useMemo(() => {
+    if (periodType === 'all') return ['All Transactions'];
     const set = new Set<string>();
     records.forEach(r => {
-      const date = r.dateFiled || (typeof r.createdAt === 'string' ? r.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10));
+      const date = r.dateAccepted || (typeof r.createdAt === 'string' ? r.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10));
       if (periodType === 'weekly') {
         set.add(getWeekKey(date));
       } else if (periodType === 'monthly') {
@@ -32,22 +34,23 @@ export const PeriodicSummary: React.FC<PeriodicSummaryProps> = ({ records }) => 
       }
     });
 
-    const list = Array.from(set);
-    return list;
+    return Array.from(set);
   }, [records, periodType]);
 
   // Keep selectedPeriod synced or default to the first one
   const currentPeriod = useMemo(() => {
+    if (periodType === 'all') return 'All Transactions';
     if (periodOptions.length === 0) return 'None';
     if (periodOptions.includes(selectedPeriod)) return selectedPeriod;
     return periodOptions[0];
-  }, [periodOptions, selectedPeriod]);
+  }, [periodType, periodOptions, selectedPeriod]);
 
   // Filter records matching current period
   const periodRecords = useMemo(() => {
+    if (periodType === 'all') return records;
     if (!currentPeriod || currentPeriod === 'None') return [];
     return records.filter(r => {
-      const date = r.dateFiled || (typeof r.createdAt === 'string' ? r.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10));
+      const date = r.dateAccepted || (typeof r.createdAt === 'string' ? r.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10));
       if (periodType === 'weekly') return getWeekKey(date) === currentPeriod;
       if (periodType === 'monthly') return getMonthKey(date) === currentPeriod;
       return getYearKey(date) === currentPeriod;
@@ -57,7 +60,7 @@ export const PeriodicSummary: React.FC<PeriodicSummaryProps> = ({ records }) => 
   // Metrics for period
   const metrics = useMemo(() => {
     const totalFees = periodRecords.reduce((sum, r) => sum + (Number(r.totalFee) || 0), 0);
-    const totalPaid = periodRecords.reduce((sum, r) => sum + (Number(r.amountPaid) || 0), 0);
+    const totalPaid = periodRecords.reduce((sum, r) => sum + getRecordTotalPaid(r), 0);
     const totalExpenses = periodRecords.reduce((sum, r) => sum + getRecordTotalExpenses(r), 0);
     const totalBalance = periodRecords.reduce((sum, r) => sum + getRecordBalance(r), 0);
     const netProfit = totalFees - totalExpenses;
@@ -80,10 +83,10 @@ export const PeriodicSummary: React.FC<PeriodicSummaryProps> = ({ records }) => 
           <Calendar className="w-5 h-5 text-blue-400" />
           <div>
             <h2 className="text-sm sm:text-base font-semibold text-white">
-              Periodic Financial Summary
+              Periodic Summary (Date Accepted &amp; Downpayment)
             </h2>
             <p className="text-xs text-slate-400">
-              Aggregated filing fees, expenses, collections, and net margin
+              View totals by all-time summary, year, month, or week
             </p>
           </div>
         </div>
@@ -95,14 +98,25 @@ export const PeriodicSummary: React.FC<PeriodicSummaryProps> = ({ records }) => 
           <div className="inline-flex rounded-lg bg-slate-950/70 p-1 border border-slate-800 text-xs">
             <button
               type="button"
-              onClick={() => setPeriodType('weekly')}
+              onClick={() => setPeriodType('all')}
               className={`px-2.5 py-1 rounded-md font-medium transition-colors whitespace-nowrap ${
-                periodType === 'weekly' 
+                periodType === 'all' 
                   ? 'bg-blue-600 text-white shadow-xs' 
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Weekly
+              All-Time
+            </button>
+            <button
+              type="button"
+              onClick={() => setPeriodType('yearly')}
+              className={`px-2.5 py-1 rounded-md font-medium transition-colors whitespace-nowrap ${
+                periodType === 'yearly' 
+                  ? 'bg-blue-600 text-white shadow-xs' 
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Yearly
             </button>
             <button
               type="button"
@@ -117,32 +131,34 @@ export const PeriodicSummary: React.FC<PeriodicSummaryProps> = ({ records }) => 
             </button>
             <button
               type="button"
-              onClick={() => setPeriodType('yearly')}
+              onClick={() => setPeriodType('weekly')}
               className={`px-2.5 py-1 rounded-md font-medium transition-colors whitespace-nowrap ${
-                periodType === 'yearly' 
+                periodType === 'weekly' 
                   ? 'bg-blue-600 text-white shadow-xs' 
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Yearly
+              Weekly
             </button>
           </div>
 
-          {/* Period Dropdown */}
-          <div className="relative">
-            <select
-              value={currentPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="appearance-none bg-slate-950/80 border border-slate-800 text-slate-200 text-xs rounded-lg pl-3 pr-8 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer"
-            >
-              {periodOptions.map(p => (
-                <option key={p} value={p} className="bg-slate-900 text-white">
-                  {p}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
+          {/* Period Dropdown (when not All-Time) */}
+          {periodType !== 'all' && (
+            <div className="relative">
+              <select
+                value={currentPeriod}
+                onChange={(e) => setSelectedPeriod(e.target.value)}
+                className="appearance-none bg-slate-950/80 border border-slate-800 text-slate-200 text-xs rounded-lg pl-3 pr-8 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer"
+              >
+                {periodOptions.map(p => (
+                  <option key={p} value={p} className="bg-slate-900 text-white">
+                    {p}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          )}
 
         </div>
       </div>

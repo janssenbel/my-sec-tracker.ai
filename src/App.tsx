@@ -229,10 +229,16 @@ function MainApp() {
     const target = records.find(r => r.id === id);
     if (!target) return;
 
+    const today = new Date().toISOString().slice(0, 10);
     const updated = records.map(r => {
       if (r.id === id) {
+        const initPay = r.initialPayment !== undefined ? r.initialPayment : r.amountPaid;
+        const finPay = Math.max(0, r.totalFee - initPay);
         return normalizeRecord({
           ...r,
+          initialPayment: initPay,
+          finalPayment: finPay,
+          dateFullyPaid: r.dateFullyPaid || today,
           amountPaid: r.totalFee,
           isFullyPaid: true,
           updatedAt: new Date().toISOString()
@@ -245,7 +251,8 @@ function MainApp() {
     showToast(`Balance for ${target.corporationName} marked as fully settled!`, 'success');
 
     if (viewingRecord?.id === id) {
-      setViewingRecord(prev => (prev ? { ...prev, amountPaid: prev.totalFee, isFullyPaid: true } : null));
+      const settled = updated.find(r => r.id === id) || null;
+      setViewingRecord(settled);
     }
   };
 
