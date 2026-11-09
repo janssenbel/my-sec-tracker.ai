@@ -13,7 +13,7 @@ import {
   downloadJSONBackup, 
   normalizeRecord 
 } from './utils/formatters';
-import { CheckCircle2, AlertCircle, Info, X, RefreshCw } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Info, X, RefreshCw, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 
 const STORAGE_KEY = 'sec_tracker_records_v1';
 const THEME_KEY = 'sec_tracker_theme';
@@ -133,6 +133,7 @@ function MainApp() {
   const [isCorporationsModalOpen, setIsCorporationsModalOpen] = useState(false);
   const [corporationsFilterType, setCorporationsFilterType] = useState<'all' | 'active'>('all');
   const [preselectedCorporation, setPreselectedCorporation] = useState<string | undefined>(undefined);
+  const [showPeriodicSummary, setShowPeriodicSummary] = useState<boolean>(false);
   
   // Notification toast
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
@@ -371,8 +372,35 @@ function MainApp() {
           }}
         />
 
-        {/* Periodic Summary Panel */}
-        <PeriodicSummary records={records} />
+        {/* Periodic Summary Tab Toggle & Collapsible Tab Content (Hidden by Default) */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setShowPeriodicSummary(prev => !prev)}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-xs ${
+                showPeriodicSummary
+                  ? 'bg-blue-600 text-white border-blue-500 shadow-blue-600/20'
+                  : 'bg-slate-900/90 hover:bg-slate-800 text-blue-400 hover:text-blue-300 border-slate-800 hover:border-blue-500/40'
+              }`}
+            >
+              <Calendar className="w-4 h-4" />
+              <span>{showPeriodicSummary ? 'Hide Periodic Summary' : 'Periodic Summary'}</span>
+              {showPeriodicSummary ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4 opacity-80" />
+              )}
+            </button>
+          </div>
+
+          {showPeriodicSummary && (
+            <PeriodicSummary
+              records={records}
+              onClose={() => setShowPeriodicSummary(false)}
+            />
+          )}
+        </div>
 
         {/* Filings Data Table */}
         <TransactionTable

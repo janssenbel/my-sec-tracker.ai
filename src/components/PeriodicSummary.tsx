@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, DollarSign, ArrowUpRight, TrendingDown, Layers, ChevronDown } from 'lucide-react';
+import { Calendar, ArrowUpRight, TrendingDown, Layers, ChevronDown, ChevronUp } from 'lucide-react';
 import { SECTransaction, SummaryPeriodType } from '../types';
 import { 
   formatPeso, 
@@ -13,9 +13,10 @@ import {
 
 interface PeriodicSummaryProps {
   records: SECTransaction[];
+  onClose?: () => void;
 }
 
-export const PeriodicSummary: React.FC<PeriodicSummaryProps> = ({ records }) => {
+export const PeriodicSummary: React.FC<PeriodicSummaryProps> = ({ records, onClose }) => {
   const [periodType, setPeriodType] = useState<SummaryPeriodType>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('');
 
@@ -160,6 +161,18 @@ export const PeriodicSummary: React.FC<PeriodicSummaryProps> = ({ records }) => 
             </div>
           )}
 
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors ml-auto sm:ml-1"
+              title="Hide Periodic Summary"
+            >
+              <ChevronUp className="w-3.5 h-3.5" />
+              <span>Hide</span>
+            </button>
+          )}
+
         </div>
       </div>
 
@@ -180,7 +193,7 @@ export const PeriodicSummary: React.FC<PeriodicSummaryProps> = ({ records }) => 
         {/* Gross Revenue / Filing Fees */}
         <div className="p-3 rounded-lg bg-slate-950/50 border border-slate-800/80">
           <div className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-            <DollarSign className="w-3 h-3 text-blue-400" />
+            <span className="font-mono font-bold text-blue-400 text-xs leading-none">₱</span>
             Gross Fees
           </div>
           <div className="text-base sm:text-lg font-bold font-mono tabular-nums text-blue-400 mt-1 truncate">

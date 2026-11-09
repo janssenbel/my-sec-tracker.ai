@@ -6,7 +6,6 @@ import {
   Check, 
   Building2, 
   Receipt,
-  DollarSign,
   CheckCircle2
 } from 'lucide-react';
 import { SECTransaction } from '../types';
@@ -143,7 +142,7 @@ export const RecordViewModal: React.FC<RecordViewModalProps> = ({
           {/* Financial Summary Ledger */}
           <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-              <DollarSign className="w-4 h-4 text-blue-400" />
+              <span className="font-mono font-bold text-blue-400 text-sm leading-none">₱</span>
               Financials &amp; Payments Ledger
             </h3>
 
