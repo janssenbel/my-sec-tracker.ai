@@ -277,24 +277,24 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
       </div>
 
       {/* Desktop / Tablet Table View */}
-      <div className="hidden lg:block overflow-x-auto">
-        <table className="w-full text-left border-collapse text-xs">
+      <div className="hidden lg:block overflow-x-auto px-4 py-3 bg-slate-950/40">
+        <table className="w-full text-left border-separate border-spacing-y-3 text-xs">
           <thead>
-            <tr className="bg-slate-950/70 border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
-              <th className="py-3 px-4">Corporation Name</th>
-              <th className="py-3 px-4">Type of Transaction</th>
-              <th className="py-3 px-4">Dates (Accepted &amp; DP &rarr; Started &rarr; Completed)</th>
-              <th className="py-3 px-4 text-right">Fee / Balance</th>
-              <th className="py-3 px-4 text-right">Expenses</th>
-              <th className="py-3 px-4 text-right">Net Profit</th>
-              <th className="py-3 px-4 text-center">Current Status</th>
-              <th className="py-3 px-4 text-center">Actions</th>
+            <tr className="text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+              <th className="pb-2 px-4">Corporation Name</th>
+              <th className="pb-2 px-4">Type of Transaction</th>
+              <th className="pb-2 px-4">Dates (Accepted &amp; DP &rarr; Started &rarr; Completed)</th>
+              <th className="pb-2 px-4 text-right">Fee / Balance</th>
+              <th className="pb-2 px-4 text-right">Expenses</th>
+              <th className="pb-2 px-4 text-right">Net Profit</th>
+              <th className="pb-2 px-4 text-center">Current Status</th>
+              <th className="pb-2 px-4 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60 text-slate-200">
+          <tbody className="text-slate-200">
             {filteredRecords.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-12 text-center text-slate-500">
+                <td colSpan={8} className="py-12 text-center text-slate-500 bg-slate-900/80 rounded-xl border border-slate-800">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <FileCheck2 className="w-8 h-8 text-slate-600" />
                     <p className="text-sm font-medium">No SEC filings match the filter criteria.</p>
@@ -310,14 +310,14 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                 const netProfit = getRecordNetProfit(r);
 
                 return (
-                  <tr key={r.id} className="hover:bg-slate-800/40 transition-colors group">
+                  <tr key={r.id} className="bg-slate-900 hover:bg-slate-800/80 transition-colors group shadow-xs">
                     
                     {/* Corporation Name */}
-                    <td className="py-3.5 px-4 font-semibold text-white">
-                      <div className="flex flex-col">
-                        <span>{r.corporationName}</span>
+                    <td className="py-4 px-4 font-semibold text-white rounded-l-xl border-y border-l border-slate-800">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-sm">{r.corporationName}</span>
                         {r.notes && (
-                          <span className="text-[11px] font-normal text-slate-400 line-clamp-1 mt-0.5">
+                          <span className="text-[11px] font-normal text-slate-400 line-clamp-1">
                             {r.notes}
                           </span>
                         )}
@@ -325,12 +325,12 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                     </td>
 
                     {/* Type of Transaction */}
-                    <td className="py-3.5 px-4">
+                    <td className="py-4 px-4 border-y border-slate-800">
                       <span className="font-medium text-slate-200">{r.filingType}</span>
                     </td>
 
                     {/* Chronological Dates: Accepted & DP, Started, Completed */}
-                    <td className="py-3.5 px-4 font-mono tabular-nums text-[11px] text-slate-300 space-y-0.5">
+                    <td className="py-4 px-4 font-mono tabular-nums text-[11px] text-slate-300 space-y-1 border-y border-slate-800">
                       <div>
                         <span className="text-slate-400 font-sans font-medium">Accepted &amp; DP: </span>
                         <span className="text-white">{formatDate(r.dateAccepted)}</span>
@@ -346,7 +346,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                     </td>
 
                     {/* Fee, Paid & Balance */}
-                    <td className="py-3.5 px-4 text-right font-mono tabular-nums">
+                    <td className="py-4 px-4 text-right font-mono tabular-nums space-y-0.5 border-y border-slate-800">
                       <div className="text-white font-medium">{formatPeso(r.totalFee)}</div>
                       <div className="text-[11px] text-cyan-400">
                         Paid: {formatPeso(totalPaid)}
@@ -363,29 +363,29 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                     </td>
 
                     {/* Expenses */}
-                    <td className="py-3.5 px-4 text-right font-mono tabular-nums">
+                    <td className="py-4 px-4 text-right font-mono tabular-nums border-y border-slate-800">
                       <div className="text-orange-400 font-medium">
                         {formatPeso(totalExpenses)}
                       </div>
-                      <div className="text-[10px] text-slate-400">
+                      <div className="text-[10px] text-slate-400 mt-0.5">
                         {r.expenses?.length || 0} item{(r.expenses?.length || 0) === 1 ? '' : 's'}
                       </div>
                     </td>
 
                     {/* Net Profit */}
-                    <td className="py-3.5 px-4 text-right font-mono tabular-nums font-semibold">
+                    <td className="py-4 px-4 text-right font-mono tabular-nums font-semibold border-y border-slate-800">
                       <span className={netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
                         {formatPeso(netProfit)}
                       </span>
                     </td>
 
                     {/* Current Status Badge */}
-                    <td className="py-3.5 px-4 text-center">
+                    <td className="py-4 px-4 text-center border-y border-slate-800">
                       {getStatusBadge(r.status)}
                     </td>
 
                     {/* Actions */}
-                    <td className="py-3.5 px-4 text-center">
+                    <td className="py-4 px-4 text-center rounded-r-xl border-y border-r border-slate-800">
                       <div className="inline-flex items-center justify-center gap-1.5">
                         
                         {/* Quick Settle Balance Button */}
@@ -441,10 +441,10 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
         </table>
       </div>
 
-      {/* Mobile / Tablet Responsive Cards */}
-      <div className="lg:hidden divide-y divide-slate-800">
+      {/* Mobile / Tablet Responsive Spaced Corporation Cards */}
+      <div className="lg:hidden p-3 sm:p-4 space-y-4 bg-slate-950/50">
         {filteredRecords.length === 0 ? (
-          <div className="p-8 text-center text-slate-500">
+          <div className="p-8 text-center text-slate-500 bg-slate-900 rounded-xl border border-slate-800">
             <FileCheck2 className="w-8 h-8 text-slate-600 mx-auto mb-2" />
             <p className="text-sm">No SEC filings match the filter.</p>
           </div>
@@ -456,17 +456,17 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
             const netProfit = getRecordNetProfit(r);
 
             return (
-              <div key={r.id} className="p-4 space-y-2.5">
+              <div key={r.id} className="p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-md space-y-3">
                 <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="text-sm font-semibold text-white">{r.corporationName}</h3>
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm sm:text-base font-bold text-white leading-snug">{r.corporationName}</h3>
                     <p className="text-xs text-blue-300 font-medium">{r.filingType}</p>
                   </div>
                   <div className="shrink-0">{getStatusBadge(r.status)}</div>
                 </div>
 
                 {/* Dates Row on Mobile */}
-                <div className="grid grid-cols-3 gap-2 text-[11px] bg-slate-950/50 p-2.5 rounded-lg border border-slate-800/70">
+                <div className="grid grid-cols-3 gap-2 text-[11px] bg-slate-950/70 p-2.5 rounded-lg border border-slate-800/80">
                   <div>
                     <span className="text-[10px] text-slate-400 block">Accepted &amp; DP</span>
                     <span className="font-mono text-slate-200">{formatDate(r.dateAccepted)}</span>
@@ -484,10 +484,10 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                 </div>
 
                 {/* Financials Grid on Mobile */}
-                <div className="grid grid-cols-2 gap-2 text-xs py-1.5 border-y border-slate-800/60">
+                <div className="grid grid-cols-2 gap-2.5 text-xs py-2 border-y border-slate-800/80">
                   <div>
                     <span className="text-[10px] text-slate-400 block">Assistance Fee / Paid</span>
-                    <span className="font-mono tabular-nums text-white font-medium">{formatPeso(r.totalFee)}</span>
+                    <span className="font-mono tabular-nums text-white font-semibold">{formatPeso(r.totalFee)}</span>
                     <span className="text-[10px] font-mono text-cyan-400 block">Paid: {formatPeso(totalPaid)}</span>
                   </div>
                   <div className="text-right">
@@ -519,7 +519,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                       <button
                         type="button"
                         onClick={() => onQuickSettle(r.id)}
-                        className="px-2 py-1 rounded text-xs text-emerald-400 bg-emerald-950/70 border border-emerald-800/80 font-medium inline-flex items-center gap-1"
+                        className="px-2.5 py-1.5 rounded-lg text-xs text-emerald-400 bg-emerald-950/70 border border-emerald-800/80 font-medium inline-flex items-center gap-1"
                       >
                         <Check className="w-3 h-3" /> Settle
                       </button>
@@ -527,7 +527,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                     <button
                       type="button"
                       onClick={() => onViewRecord(r)}
-                      className="p-1.5 rounded text-slate-300 hover:text-white bg-slate-800"
+                      className="p-2 rounded-lg text-slate-300 hover:text-white bg-slate-800"
                       title="View"
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -535,7 +535,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                     <button
                       type="button"
                       onClick={() => onEditRecord(r)}
-                      className="p-1.5 rounded text-blue-400 hover:text-blue-300 bg-slate-800"
+                      className="p-2 rounded-lg text-blue-400 hover:text-blue-300 bg-slate-800"
                       title="Edit"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
@@ -543,7 +543,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
                     <button
                       type="button"
                       onClick={() => onDeleteRecord(r.id)}
-                      className="p-1.5 rounded text-rose-400 hover:text-rose-300 bg-slate-800"
+                      className="p-2 rounded-lg text-rose-400 hover:text-rose-300 bg-slate-800"
                       title="Delete"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

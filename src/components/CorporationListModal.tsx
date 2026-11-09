@@ -103,40 +103,42 @@ export const CorporationListModal: React.FC<CorporationListModalProps> = ({
               <p className="text-sm font-medium">No corporations found matching this filter.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/40">
-              <table className="w-full text-left text-xs border-collapse">
+            <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+              <table className="w-full text-left text-xs border-separate border-spacing-y-2.5">
                 <thead>
-                  <tr className="bg-slate-950 border-b border-slate-800 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
-                    <th className="py-3 px-4">Corporation Name</th>
-                    <th className="py-3 px-3 text-center">Filings</th>
-                    <th className="py-3 px-3 text-center">Active</th>
-                    <th className="py-3 px-4 text-right">Total Fees</th>
-                    <th className="py-3 px-4 text-right">Balance Due</th>
-                    <th className="py-3 px-4 text-right">Expenses</th>
-                    <th className="py-3 px-4 text-right">Net Profit</th>
-                    <th className="py-3 px-3 text-center">Filter</th>
+                  <tr className="text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+                    <th className="pb-1.5 px-4">Corporation Name</th>
+                    <th className="pb-1.5 px-3 text-center">Filings</th>
+                    <th className="pb-1.5 px-3 text-center">Active</th>
+                    <th className="pb-1.5 px-4 text-right">Total Fees</th>
+                    <th className="pb-1.5 px-4 text-right">Balance Due</th>
+                    <th className="pb-1.5 px-4 text-right">Expenses</th>
+                    <th className="pb-1.5 px-4 text-right">Net Profit</th>
+                    <th className="pb-1.5 px-3 text-center">Filter</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-slate-200">
+                <tbody className="text-slate-200">
                   {corporationSummaries.map((corp) => (
                     <tr 
                       key={corp.name} 
-                      className="hover:bg-slate-800/40 transition-colors cursor-pointer group"
+                      className="bg-slate-900 hover:bg-slate-800/80 transition-colors cursor-pointer group shadow-xs"
                       onClick={() => {
                         onSelectCorporation(corp.name);
                         onClose();
                       }}
                     >
-                      <td className="py-3 px-4 font-semibold text-white flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-slate-500 group-hover:text-blue-400 transition-colors shrink-0" />
-                        <span className="group-hover:text-blue-300 transition-colors">{corp.name}</span>
+                      <td className="py-3.5 px-4 font-semibold text-white rounded-l-xl border-y border-l border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-slate-500 group-hover:text-blue-400 transition-colors shrink-0" />
+                          <span className="group-hover:text-blue-300 transition-colors">{corp.name}</span>
+                        </div>
                       </td>
 
-                      <td className="py-3 px-3 text-center font-mono tabular-nums">
+                      <td className="py-3.5 px-3 text-center font-mono tabular-nums border-y border-slate-800">
                         {corp.totalFilings}
                       </td>
 
-                      <td className="py-3 px-3 text-center font-mono tabular-nums">
+                      <td className="py-3.5 px-3 text-center font-mono tabular-nums border-y border-slate-800">
                         {corp.activeFilings > 0 ? (
                           <span className="text-amber-400 font-semibold">{corp.activeFilings}</span>
                         ) : (
@@ -144,11 +146,11 @@ export const CorporationListModal: React.FC<CorporationListModalProps> = ({
                         )}
                       </td>
 
-                      <td className="py-3 px-4 text-right font-mono tabular-nums">
+                      <td className="py-3.5 px-4 text-right font-mono tabular-nums border-y border-slate-800">
                         {formatPeso(corp.totalFees)}
                       </td>
 
-                      <td className="py-3 px-4 text-right font-mono tabular-nums font-semibold">
+                      <td className="py-3.5 px-4 text-right font-mono tabular-nums font-semibold border-y border-slate-800">
                         {corp.balance > 0 ? (
                           <span className="text-rose-400">{formatPeso(corp.balance)}</span>
                         ) : (
@@ -156,17 +158,17 @@ export const CorporationListModal: React.FC<CorporationListModalProps> = ({
                         )}
                       </td>
 
-                      <td className="py-3 px-4 text-right font-mono tabular-nums text-orange-400">
+                      <td className="py-3.5 px-4 text-right font-mono tabular-nums text-orange-400 border-y border-slate-800">
                         {formatPeso(corp.totalExpenses)}
                       </td>
 
-                      <td className="py-3 px-4 text-right font-mono tabular-nums font-semibold">
+                      <td className="py-3.5 px-4 text-right font-mono tabular-nums font-semibold border-y border-slate-800">
                         <span className={corp.netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
                           {formatPeso(corp.netProfit)}
                         </span>
                       </td>
 
-                      <td className="py-3 px-3 text-center">
+                      <td className="py-3.5 px-3 text-center rounded-r-xl border-y border-r border-slate-800">
                         <button
                           type="button"
                           className="px-2.5 py-1 text-[11px] font-medium text-blue-400 bg-blue-950/70 border border-blue-800 rounded-md hover:bg-blue-900 transition-colors inline-flex items-center gap-0.5"
