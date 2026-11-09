@@ -104,6 +104,21 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
   const completedCount = records.filter(r => (r.status || '').trim().toLowerCase() === 'completed').length;
   const activeCount = allCount - completedCount;
 
+  // Filtered totals for footer summary
+  const filteredTotals = useMemo(() => {
+    return filteredRecords.reduce(
+      (acc, r) => {
+        acc.totalFee += r.totalFee;
+        acc.totalCollected += getRecordTotalPaid(r);
+        acc.totalBalance += getRecordBalance(r);
+        acc.totalExpenses += getRecordTotalExpenses(r);
+        acc.netProfit += getRecordNetProfit(r);
+        return acc;
+      },
+      { totalFee: 0, totalCollected: 0, totalBalance: 0, totalExpenses: 0, netProfit: 0 }
+    );
+  }, [filteredRecords]);
+
   const getStatusBadge = (status: string) => {
     const s = (status || 'Unspecified').trim();
     const lower = s.toLowerCase();
@@ -555,6 +570,41 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
           })
         )}
       </div>
+
+      {/* Filtered Totals Summary Bar */}
+      {filteredRecords.length > 0 && (
+        <div className="px-4 py-3.5 bg-slate-950/90 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs">
+          <div className="text-slate-400 font-medium">
+            Showing <span className="text-white font-semibold font-mono">{filteredRecords.length}</span> transaction{filteredRecords.length === 1 ? '' : 's'}
+          </div>
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6 font-mono tabular-nums">
+            <div>
+              <span className="text-slate-400 font-sans mr-1.5">Total Fees:</span>
+              <span className="text-white font-semibold">{formatPeso(filteredTotals.totalFee)}</span>
+            </div>
+            <div className="px-2.5 py-1 rounded-lg bg-teal-950/60 border border-teal-800/70">
+              <span className="text-teal-300 font-sans font-medium mr-1.5">Total Collected Fees:</span>
+              <span className="text-teal-400 font-bold">{formatPeso(filteredTotals.totalCollected)}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 font-sans mr-1.5">Balance Due:</span>
+              <span className={filteredTotals.totalBalance > 0 ? 'text-rose-400 font-semibold' : 'text-emerald-400 font-semibold'}>
+                {formatPeso(filteredTotals.totalBalance)}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-400 font-sans mr-1.5">Expenses:</span>
+              <span className="text-orange-400 font-semibold">{formatPeso(filteredTotals.totalExpenses)}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 font-sans mr-1.5">Net Profit:</span>
+              <span className={filteredTotals.netProfit >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                {formatPeso(filteredTotals.netProfit)}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

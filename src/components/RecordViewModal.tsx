@@ -155,9 +155,12 @@ export const RecordViewModal: React.FC<RecordViewModalProps> = ({
                 </span>
               </div>
               <div className="p-3 rounded-lg bg-slate-900 border border-slate-800">
-                <span className="text-[11px] text-slate-400 block">Initial Payment (Downpayment)</span>
-                <span className="text-lg font-bold font-mono tabular-nums text-cyan-400">
-                  {formatPeso(initialPay)}
+                <span className="text-[11px] text-slate-400 block">Total Collected Fees</span>
+                <span className="text-lg font-bold font-mono tabular-nums text-teal-400">
+                  {formatPeso(totalPaid)}
+                </span>
+                <span className="text-[11px] font-mono text-cyan-400 block mt-0.5">
+                  Downpayment: {formatPeso(initialPay)}
                 </span>
                 {record.isFullyPaid && finalPay > 0 && (
                   <span className="text-[11px] font-mono text-emerald-400 block mt-0.5">

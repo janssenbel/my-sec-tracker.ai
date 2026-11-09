@@ -6,10 +6,11 @@ import {
   AlertCircle, 
   Receipt, 
   Building2,
-  TrendingUp 
+  TrendingUp,
+  Wallet
 } from 'lucide-react';
 import { SECTransaction } from '../types';
-import { formatPeso, getRecordBalance, getRecordTotalExpenses } from '../utils/formatters';
+import { formatPeso, getRecordBalance, getRecordTotalPaid, getRecordTotalExpenses } from '../utils/formatters';
 
 interface StatCardsProps {
   records: SECTransaction[];
@@ -25,16 +26,17 @@ export const StatCards: React.FC<StatCardsProps> = ({ records, onOpenCorporation
   
   const inProgressRecords = totalRecords - completedRecords;
 
+  const totalCollectedFees = records.reduce((sum, r) => sum + getRecordTotalPaid(r), 0);
+
   const totalUncollectedBalance = records.reduce((sum, r) => sum + getRecordBalance(r), 0);
 
   const totalExpenses = records.reduce((sum, r) => sum + getRecordTotalExpenses(r), 0);
 
   const totalFees = records.reduce((sum, r) => sum + (Number(r.totalFee) || 0), 0);
-  const totalPaid = records.reduce((sum, r) => sum + (Number(r.amountPaid) || 0), 0);
   const netRealizedProfit = totalFees - totalExpenses;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
       
       {/* 1. Total Records */}
       <div className="p-4 rounded-xl bg-slate-900/90 dark:bg-slate-900/90 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors">
@@ -96,11 +98,27 @@ export const StatCards: React.FC<StatCardsProps> = ({ records, onOpenCorporation
           {completedRecords}
         </div>
         <div className="text-[11px] text-emerald-400/80 mt-1 truncate">
-          Released & acknowledged
+          Released &amp; acknowledged
         </div>
       </div>
 
-      {/* 4. Total Uncollected Balance */}
+      {/* 4. Total Collected Fees */}
+      <div className="p-4 rounded-xl bg-slate-900/90 dark:bg-slate-900/90 border border-slate-800 flex flex-col justify-between hover:border-teal-500/30 transition-colors">
+        <div className="flex items-center justify-between text-xs font-medium text-slate-400 mb-1">
+          <span className="flex items-center gap-1.5">
+            <Wallet className="w-3.5 h-3.5 text-teal-400" />
+            Collected Fees
+          </span>
+        </div>
+        <div className="text-xl sm:text-2xl font-bold font-mono tabular-nums text-teal-400 mt-1 truncate">
+          {formatPeso(totalCollectedFees)}
+        </div>
+        <div className="text-[11px] text-teal-400/80 mt-1 truncate">
+          Total payments received
+        </div>
+      </div>
+
+      {/* 5. Total Uncollected Balance */}
       <div className="p-4 rounded-xl bg-slate-900/90 dark:bg-slate-900/90 border border-slate-800 flex flex-col justify-between hover:border-rose-500/30 transition-colors">
         <div className="flex items-center justify-between text-xs font-medium text-slate-400 mb-1">
           <span className="flex items-center gap-1.5">
@@ -116,7 +134,7 @@ export const StatCards: React.FC<StatCardsProps> = ({ records, onOpenCorporation
         </div>
       </div>
 
-      {/* 5. Total Expenses */}
+      {/* 6. Total Expenses */}
       <div className="p-4 rounded-xl bg-slate-900/90 dark:bg-slate-900/90 border border-slate-800 flex flex-col justify-between hover:border-orange-500/30 transition-colors">
         <div className="flex items-center justify-between text-xs font-medium text-slate-400 mb-1">
           <span className="flex items-center gap-1.5">
@@ -132,8 +150,8 @@ export const StatCards: React.FC<StatCardsProps> = ({ records, onOpenCorporation
         </div>
       </div>
 
-      {/* 6. Net Profit / Margin */}
-      <div className="p-4 rounded-xl bg-slate-900/90 dark:bg-slate-900/90 border border-slate-800 flex flex-col justify-between hover:border-blue-500/30 transition-colors">
+      {/* 7. Net Profit / Margin */}
+      <div className="p-4 rounded-xl bg-slate-900/90 dark:bg-slate-900/90 border border-slate-800 flex flex-col justify-between hover:border-blue-500/30 transition-colors col-span-2 sm:col-span-1">
         <div className="flex items-center justify-between text-xs font-medium text-slate-400 mb-1">
           <span className="flex items-center gap-1.5">
             <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />

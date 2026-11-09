@@ -210,13 +210,13 @@ export const PeriodicSummary: React.FC<PeriodicSummaryProps> = ({ records }) => 
           </div>
         </div>
 
-        {/* Collected */}
+        {/* Total Collected Fees */}
         <div className="p-3 rounded-lg bg-slate-950/50 border border-slate-800/80">
           <div className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
-            <ArrowUpRight className="w-3 h-3 text-cyan-400" />
-            Collected
+            <ArrowUpRight className="w-3 h-3 text-teal-400" />
+            Total Collected Fees
           </div>
-          <div className="text-base sm:text-lg font-bold font-mono tabular-nums text-cyan-400 mt-1 truncate">
+          <div className="text-base sm:text-lg font-bold font-mono tabular-nums text-teal-400 mt-1 truncate">
             {formatPeso(metrics.totalPaid)}
           </div>
         </div>

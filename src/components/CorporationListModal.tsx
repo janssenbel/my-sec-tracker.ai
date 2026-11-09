@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { X, Building2, ChevronRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Building2, ChevronRight } from 'lucide-react';
 import { SECTransaction, CorporationSummary } from '../types';
-import { formatPeso, getRecordBalance, getRecordTotalExpenses } from '../utils/formatters';
+import { formatPeso, getRecordBalance, getRecordTotalPaid, getRecordTotalExpenses } from '../utils/formatters';
 
 interface CorporationListModalProps {
   isOpen: boolean;
@@ -43,7 +43,7 @@ export const CorporationListModal: React.FC<CorporationListModalProps> = ({
       }
 
       const totalFees = corpRecords.reduce((sum, r) => sum + (Number(r.totalFee) || 0), 0);
-      const totalPaid = corpRecords.reduce((sum, r) => sum + (Number(r.amountPaid) || 0), 0);
+      const totalPaid = corpRecords.reduce((sum, r) => sum + getRecordTotalPaid(r), 0);
       const balance = corpRecords.reduce((sum, r) => sum + getRecordBalance(r), 0);
       const totalExpenses = corpRecords.reduce((sum, r) => sum + getRecordTotalExpenses(r), 0);
       const netProfit = totalFees - totalExpenses;
@@ -65,11 +65,26 @@ export const CorporationListModal: React.FC<CorporationListModalProps> = ({
     return summaries.sort((a, b) => a.name.localeCompare(b.name));
   }, [records, filterType]);
 
+  const grandTotals = useMemo(() => {
+    return corporationSummaries.reduce(
+      (acc, corp) => ({
+        filings: acc.filings + corp.totalFilings,
+        active: acc.active + corp.activeFilings,
+        totalFees: acc.totalFees + corp.totalFees,
+        totalPaid: acc.totalPaid + corp.totalPaid,
+        balance: acc.balance + corp.balance,
+        totalExpenses: acc.totalExpenses + corp.totalExpenses,
+        netProfit: acc.netProfit + corp.netProfit
+      }),
+      { filings: 0, active: 0, totalFees: 0, totalPaid: 0, balance: 0, totalExpenses: 0, netProfit: 0 }
+    );
+  }, [corporationSummaries]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl text-slate-100 overflow-hidden my-6">
+      <div className="relative w-full max-w-5xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl text-slate-100 overflow-hidden my-6">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/70">
@@ -82,7 +97,7 @@ export const CorporationListModal: React.FC<CorporationListModalProps> = ({
                 {filterType === 'active' ? 'Active Corporations Directory' : 'All Tracked Corporations'}
               </h2>
               <p className="text-xs text-slate-400">
-                {corporationSummaries.length} corporate entities with ongoing or archived SEC filings
+                {corporationSummaries.length} corporate entities · Total Collected Fees: <strong className="text-teal-400 font-mono">{formatPeso(grandTotals.totalPaid)}</strong>
               </p>
             </div>
           </div>
@@ -111,6 +126,7 @@ export const CorporationListModal: React.FC<CorporationListModalProps> = ({
                     <th className="pb-1.5 px-3 text-center">Filings</th>
                     <th className="pb-1.5 px-3 text-center">Active</th>
                     <th className="pb-1.5 px-4 text-right">Total Fees</th>
+                    <th className="pb-1.5 px-4 text-right">Collected Fees</th>
                     <th className="pb-1.5 px-4 text-right">Balance Due</th>
                     <th className="pb-1.5 px-4 text-right">Expenses</th>
                     <th className="pb-1.5 px-4 text-right">Net Profit</th>
@@ -150,6 +166,10 @@ export const CorporationListModal: React.FC<CorporationListModalProps> = ({
                         {formatPeso(corp.totalFees)}
                       </td>
 
+                      <td className="py-3.5 px-4 text-right font-mono tabular-nums text-teal-400 font-semibold border-y border-slate-800">
+                        {formatPeso(corp.totalPaid)}
+                      </td>
+
                       <td className="py-3.5 px-4 text-right font-mono tabular-nums font-semibold border-y border-slate-800">
                         {corp.balance > 0 ? (
                           <span className="text-rose-400">{formatPeso(corp.balance)}</span>
@@ -179,6 +199,35 @@ export const CorporationListModal: React.FC<CorporationListModalProps> = ({
                     </tr>
                   ))}
                 </tbody>
+                <tfoot>
+                  <tr className="bg-slate-950 font-bold text-white">
+                    <td className="py-3.5 px-4 rounded-l-xl border-y border-l border-slate-700 text-slate-300 uppercase text-[11px] tracking-wider">
+                      Grand Total
+                    </td>
+                    <td className="py-3.5 px-3 text-center font-mono tabular-nums border-y border-slate-700">
+                      {grandTotals.filings}
+                    </td>
+                    <td className="py-3.5 px-3 text-center font-mono tabular-nums text-amber-400 border-y border-slate-700">
+                      {grandTotals.active}
+                    </td>
+                    <td className="py-3.5 px-4 text-right font-mono tabular-nums text-blue-400 border-y border-slate-700">
+                      {formatPeso(grandTotals.totalFees)}
+                    </td>
+                    <td className="py-3.5 px-4 text-right font-mono tabular-nums text-teal-400 border-y border-slate-700">
+                      {formatPeso(grandTotals.totalPaid)}
+                    </td>
+                    <td className="py-3.5 px-4 text-right font-mono tabular-nums text-rose-400 border-y border-slate-700">
+                      {formatPeso(grandTotals.balance)}
+                    </td>
+                    <td className="py-3.5 px-4 text-right font-mono tabular-nums text-orange-400 border-y border-slate-700">
+                      {formatPeso(grandTotals.totalExpenses)}
+                    </td>
+                    <td className="py-3.5 px-4 text-right font-mono tabular-nums text-emerald-400 border-y border-slate-700">
+                      {formatPeso(grandTotals.netProfit)}
+                    </td>
+                    <td className="py-3.5 px-3 rounded-r-xl border-y border-r border-slate-700"></td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           )}
