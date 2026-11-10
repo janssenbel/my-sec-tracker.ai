@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import { 
-  Building2, 
   Sun, 
   Moon, 
   Download, 
@@ -15,6 +14,59 @@ import {
   X
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+
+const BookPencilLogo: React.FC<{ className?: string }> = ({ className = 'w-9 h-9 sm:w-10 sm:h-10 rounded-xl' }) => (
+  <div
+    className={`${className} bg-gradient-to-br from-sky-400 via-sky-500 to-blue-500 flex items-center justify-center shadow-md shadow-sky-500/25 border border-sky-300/40 shrink-0 overflow-hidden`}
+  >
+    <svg
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-7 h-7 sm:w-8 sm:h-8"
+      aria-hidden="true"
+    >
+      {/* Book Drop Shadow */}
+      <rect x="11" y="12" width="34" height="42" rx="5" fill="#0284c7" fillOpacity="0.35" />
+      {/* White Book Body */}
+      <rect x="10" y="10" width="34" height="42" rx="5" fill="#FFFFFF" />
+      {/* Book Spine Line */}
+      <line x1="16.5" y1="10.5" x2="16.5" y2="51.5" stroke="#38bdf8" strokeWidth="1.8" />
+      {/* Bottom Page Edge Highlight */}
+      <rect x="14" y="47.5" width="27" height="2" rx="1" fill="#bae6fd" />
+      {/* Writing Lines on Book */}
+      <line x1="20.5" y1="20" x2="38.5" y2="20" stroke="#0ea5e9" strokeWidth="2.2" strokeLinecap="round" />
+      <line x1="20.5" y1="26" x2="38.5" y2="26" stroke="#0ea5e9" strokeWidth="2.2" strokeLinecap="round" />
+      <line x1="20.5" y1="32" x2="34.5" y2="32" stroke="#0ea5e9" strokeWidth="2.2" strokeLinecap="round" />
+      <line x1="20.5" y1="38" x2="30.5" y2="38" stroke="#0ea5e9" strokeWidth="2.2" strokeLinecap="round" />
+      <line x1="20.5" y1="44" x2="27.5" y2="44" stroke="#38bdf8" strokeWidth="2.2" strokeLinecap="round" />
+
+      {/* Pencil Writing on Book (Rotated -45 deg around tip at 31, 38) */}
+      <g transform="translate(31, 38) rotate(-45)">
+        {/* Light Blue Halo Outline around Pencil */}
+        <path
+          d="M-1.5 0 L6.5 -4.8 L27 -4.8 C28.5 -4.8 29.5 -3.6 29.5 -2.2 L29.5 2.2 C29.5 3.6 28.5 4.8 27 4.8 L6.5 4.8 Z"
+          fill="#0ea5e9"
+        />
+        {/* White Pencil Shaft */}
+        <rect x="6.5" y="-3.3" width="16.5" height="6.6" rx="0.8" fill="#FFFFFF" />
+        {/* Shaft Center Ridge */}
+        <line x1="7.5" y1="0" x2="22" y2="0" stroke="#bae6fd" strokeWidth="1.1" />
+        {/* Ferrule Band */}
+        <rect x="23" y="-3.3" width="2.2" height="6.6" fill="#7dd3fc" />
+        {/* White Eraser Cap */}
+        <path
+          d="M25.2 -3.3 L27.2 -3.3 C28.1 -3.3 28.8 -2.5 28.8 -1.5 L28.8 1.5 C28.8 2.5 28.1 3.3 27.2 3.3 L25.2 3.3 Z"
+          fill="#FFFFFF"
+        />
+        {/* White Pencil Cone */}
+        <polygon points="0,0 6.5,-3.3 6.5,3.3" fill="#FFFFFF" />
+        {/* Graphite Writing Nib */}
+        <polygon points="0,0 2.8,-1.45 2.8,1.45" fill="#0284c7" />
+      </g>
+    </svg>
+  </div>
+);
 
 interface NavbarProps {
   darkMode: boolean;
@@ -60,9 +112,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             
             {/* Brand & Emblem */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
-                <Building2 className="w-5 h-5 text-blue-100" />
-              </div>
+              <BookPencilLogo className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl" />
               <div>
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <span className="text-sm sm:text-base md:text-lg font-bold tracking-tight text-white whitespace-nowrap">
@@ -301,9 +351,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-2xl text-slate-100">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white">
-                  <Building2 className="w-4 h-4 text-blue-100" />
-                </div>
+                <BookPencilLogo className="w-8 h-8 rounded-lg" />
                 <h3 className="text-sm font-bold text-white">Add to iPhone / iPad</h3>
               </div>
               <button

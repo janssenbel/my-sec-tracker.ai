@@ -39,108 +39,130 @@
           var ctx = canvas.getContext('2d');
           if (!ctx) return;
 
-          // 1. Rich Deep Navy & Blue Gradient Base matching App & Header
+          // 1. Light Blue Background Gradient matching Header Icon
           var bg = ctx.createLinearGradient(0, 0, 512, 512);
-          bg.addColorStop(0, '#090e1a');
-          bg.addColorStop(0.35, '#0f172a');
-          bg.addColorStop(0.7, '#1e3a8a');
-          bg.addColorStop(1, '#2563eb');
+          bg.addColorStop(0, '#48caff');
+          bg.addColorStop(0.5, '#38bdf8');
+          bg.addColorStop(1, '#0ea5e9');
           ctx.fillStyle = bg;
           ctx.fillRect(0, 0, 512, 512);
 
-          // 2. Central Ambient Radial Glow
-          var glow = ctx.createRadialGradient(256, 210, 20, 256, 210, 220);
-          glow.addColorStop(0, 'rgba(59, 130, 246, 0.40)');
-          glow.addColorStop(0.6, 'rgba(30, 58, 138, 0.20)');
-          glow.addColorStop(1, 'rgba(15, 23, 42, 0)');
+          // 2. Soft Radial Highlight
+          var glow = ctx.createRadialGradient(235, 235, 20, 235, 235, 280);
+          glow.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
+          glow.addColorStop(1, 'rgba(14, 165, 233, 0)');
           ctx.fillStyle = glow;
           ctx.beginPath();
-          ctx.arc(256, 210, 220, 0, Math.PI * 2);
+          ctx.arc(235, 235, 280, 0, Math.PI * 2);
           ctx.fill();
 
-          // 3. Header-Style Emblem Box (Rounded Squircle matching header badge)
-          var boxSize = 250;
-          var boxX = 256 - (boxSize / 2);
-          var boxY = 80;
-          var cornerR = 52;
-          
+          // 3. White Book with Drop Shadow
           ctx.save();
-          // Shadow behind header badge
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+          ctx.shadowColor = 'rgba(3, 105, 161, 0.32)';
           ctx.shadowBlur = 24;
           ctx.shadowOffsetY = 12;
-
-          var boxGrad = ctx.createLinearGradient(boxX, boxY, boxX + boxSize, boxY + boxSize);
-          boxGrad.addColorStop(0, '#3b82f6');
-          boxGrad.addColorStop(0.5, '#2563eb');
-          boxGrad.addColorStop(1, '#4338ca');
-          ctx.fillStyle = boxGrad;
-
+          ctx.fillStyle = '#ffffff';
           ctx.beginPath();
-          ctx.roundRect(boxX, boxY, boxSize, boxSize, [cornerR]);
+          ctx.roundRect(102, 112, 256, 308, [34]);
           ctx.fill();
           ctx.restore();
 
-          // Outer hairline rim on badge
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-          ctx.lineWidth = 3;
+          // Book Spine Line on Left
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 8;
           ctx.beginPath();
-          ctx.roundRect(boxX, boxY, boxSize, boxSize, [cornerR]);
+          ctx.moveTo(140, 114);
+          ctx.lineTo(140, 418);
           ctx.stroke();
 
-          // 4. SEC Corporate Building2 Icon inside badge
-          // Classical Triangle Pediment
-          ctx.fillStyle = '#ffffff';
+          // Bottom Page Thickness Detail
+          ctx.fillStyle = '#bae6fd';
           ctx.beginPath();
-          ctx.moveTo(256, 122);
-          ctx.lineTo(176, 162);
-          ctx.lineTo(336, 162);
-          ctx.closePath();
+          ctx.roundRect(130, 394, 210, 14, [7]);
           ctx.fill();
 
-          // Entablature beam
-          ctx.fillStyle = '#e0f2fe';
-          ctx.fillRect(172, 166, 168, 12);
-
-          // 4 Classical Pillars
-          var pillars = [186, 224, 268, 306];
-          for (var i = 0; i < pillars.length; i++) {
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(pillars[i], 184, 18, 64);
-            // subtle 3D highlight
-            ctx.fillStyle = '#bae6fd';
-            ctx.fillRect(pillars[i] + 12, 184, 6, 64);
+          // Horizontal Writing Lines on the Book
+          ctx.strokeStyle = '#0ea5e9';
+          ctx.lineWidth = 12;
+          ctx.lineCap = 'round';
+          var lineYs = [180, 221, 262, 302, 343];
+          var lineMaxXs = [312, 312, 286, 246, 220];
+          for (var i = 0; i < lineYs.length; i++) {
+            ctx.beginPath();
+            ctx.moveTo(168, lineYs[i]);
+            ctx.lineTo(lineMaxXs[i], lineYs[i]);
+            ctx.stroke();
           }
 
-          // Golden SEC Shield in center
-          ctx.fillStyle = '#f59e0b';
+          // 4. White Pencil Writing on the Book (Rotated -45 deg around tip at 248, 302)
+          ctx.save();
+          ctx.translate(248, 302);
+          ctx.rotate(-Math.PI / 4);
+
+          // Pencil Shadow
+          ctx.save();
+          ctx.fillStyle = 'rgba(2, 132, 199, 0.28)';
           ctx.beginPath();
-          ctx.moveTo(256, 192);
-          ctx.lineTo(240, 202);
-          ctx.lineTo(240, 224);
-          ctx.quadraticCurveTo(240, 240, 256, 248);
-          ctx.quadraticCurveTo(272, 240, 272, 224);
-          ctx.lineTo(272, 202);
+          ctx.roundRect(24, 6, 175, 44, [12]);
+          ctx.fill();
+          ctx.restore();
+
+          // Light Blue Halo around Pencil so White Pencil stands out over White Book
+          ctx.fillStyle = '#0ea5e9';
+          ctx.beginPath();
+          ctx.moveTo(-10, 0);
+          ctx.lineTo(38, -30);
+          ctx.lineTo(182, -30);
+          ctx.quadraticCurveTo(196, -30, 196, -16);
+          ctx.lineTo(196, 16);
+          ctx.quadraticCurveTo(196, 30, 182, 30);
+          ctx.lineTo(38, 30);
           ctx.closePath();
           ctx.fill();
 
-          // Foundation base steps
-          ctx.fillStyle = '#e0f2fe';
-          ctx.fillRect(166, 252, 180, 12);
-          ctx.fillStyle = '#bae6fd';
-          ctx.fillRect(156, 266, 200, 14);
-
-          // 5. Bold High-Contrast Typography: "SEC" and "TRACKER"
+          // Main White Pencil Shaft
           ctx.fillStyle = '#ffffff';
-          ctx.font = '900 66px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('SEC', 256, 390);
+          ctx.beginPath();
+          ctx.roundRect(38, -21, 114, 42, [4]);
+          ctx.fill();
 
-          ctx.fillStyle = '#38bdf8';
-          ctx.font = '800 28px "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-          ctx.letterSpacing = '4px';
-          ctx.fillText('TRACKER', 256, 442);
+          // Subtle Shaft Center Ridge
+          ctx.strokeStyle = '#bae6fd';
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.moveTo(45, 0);
+          ctx.lineTo(145, 0);
+          ctx.stroke();
+
+          // Ferrule Band
+          ctx.fillStyle = '#7dd3fc';
+          ctx.fillRect(152, -21, 14, 42);
+
+          // White Eraser Cap
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.roundRect(166, -21, 20, 42, [0, 10, 10, 0]);
+          ctx.fill();
+
+          // White Pencil Cone Tip
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(38, -21);
+          ctx.lineTo(38, 21);
+          ctx.closePath();
+          ctx.fill();
+
+          // Graphite Point Nib
+          ctx.fillStyle = '#0284c7';
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(17, -9.5);
+          ctx.lineTo(17, 9.5);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.restore();
 
           // Export high-resolution PNG data URL
           var iconDataUrl = canvas.toDataURL('image/png');
@@ -165,7 +187,7 @@
               display: "standalone",
               orientation: "any",
               background_color: "#0f172a",
-              theme_color: "#0f172a",
+              theme_color: "#38bdf8",
               description: "An offline-first corporate compliance and filing management application for Philippine SEC transactions, fees, itemized expenses, and balance tracking.",
               icons: [
                 { src: iconDataUrl, sizes: "512x512", type: "image/png", purpose: "any" },
