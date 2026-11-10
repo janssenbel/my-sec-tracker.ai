@@ -13,7 +13,7 @@ import {
   downloadJSONBackup, 
   normalizeRecord 
 } from './utils/formatters';
-import { CheckCircle2, AlertCircle, Info, X, RefreshCw, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Info, X, RefreshCw, Calendar, ChevronDown, ChevronUp, ClipboardList } from 'lucide-react';
 
 const STORAGE_KEY = 'sec_tracker_records_v1';
 const THEME_KEY = 'sec_tracker_theme';
@@ -134,6 +134,7 @@ function MainApp() {
   const [corporationsFilterType, setCorporationsFilterType] = useState<'all' | 'active'>('all');
   const [preselectedCorporation, setPreselectedCorporation] = useState<string | undefined>(undefined);
   const [showPeriodicSummary, setShowPeriodicSummary] = useState<boolean>(false);
+  const [showTransactionsList, setShowTransactionsList] = useState<boolean>(false);
   
   // Notification toast
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
@@ -372,49 +373,71 @@ function MainApp() {
           }}
         />
 
-        {/* Periodic Summary Tab Toggle & Collapsible Tab Content (Hidden by Default) */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
+        {/* Collapsible Tabs Bar: Periodic Summary & List of Transactions (Both Hidden by Default, Side-by-Side) */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 sm:flex sm:flex-row items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => setShowPeriodicSummary(prev => !prev)}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-xs ${
+              className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-xs whitespace-nowrap ${
                 showPeriodicSummary
                   ? 'bg-blue-600 text-white border-blue-500 shadow-blue-600/20'
                   : 'bg-slate-900/90 hover:bg-slate-800 text-blue-400 hover:text-blue-300 border-slate-800 hover:border-blue-500/40'
               }`}
             >
-              <Calendar className="w-4 h-4" />
-              <span>{showPeriodicSummary ? 'Hide Periodic Summary' : 'Periodic Summary'}</span>
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span className="truncate">Periodic Summary</span>
               {showPeriodicSummary ? (
-                <ChevronUp className="w-4 h-4" />
+                <ChevronUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
               ) : (
-                <ChevronDown className="w-4 h-4 opacity-80" />
+                <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 opacity-80 shrink-0" />
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowTransactionsList(prev => !prev)}
+              className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-xs whitespace-nowrap ${
+                showTransactionsList
+                  ? 'bg-blue-600 text-white border-blue-500 shadow-blue-600/20'
+                  : 'bg-slate-900/90 hover:bg-slate-800 text-blue-400 hover:text-blue-300 border-slate-800 hover:border-blue-500/40'
+              }`}
+            >
+              <ClipboardList className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span className="truncate">List of Transactions ({records.length})</span>
+              {showTransactionsList ? (
+                <ChevronUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 opacity-80 shrink-0" />
               )}
             </button>
           </div>
 
+          {/* Periodic Summary Panel (Hidden by Default) */}
           {showPeriodicSummary && (
             <PeriodicSummary
               records={records}
               onClose={() => setShowPeriodicSummary(false)}
             />
           )}
-        </div>
 
-        {/* Filings Data Table */}
-        <TransactionTable
-          records={records}
-          onViewRecord={(record) => setViewingRecord(record)}
-          onEditRecord={(record) => {
-            setEditingRecord(record);
-            setIsModalOpen(true);
-          }}
-          onDeleteRecord={handleDeleteRecord}
-          onQuickSettle={handleQuickSettle}
-          preselectedFilter={preselectedCorporation}
-          onClearPreselectedFilter={() => setPreselectedCorporation(undefined)}
-        />
+          {/* Filings Data Table / List of Transactions (Hidden by Default) */}
+          {showTransactionsList && (
+            <TransactionTable
+              records={records}
+              onViewRecord={(record) => setViewingRecord(record)}
+              onEditRecord={(record) => {
+                setEditingRecord(record);
+                setIsModalOpen(true);
+              }}
+              onDeleteRecord={handleDeleteRecord}
+              onQuickSettle={handleQuickSettle}
+              preselectedFilter={preselectedCorporation}
+              onClearPreselectedFilter={() => setPreselectedCorporation(undefined)}
+              onClose={() => setShowTransactionsList(false)}
+            />
+          )}
+        </div>
 
       </main>
 
@@ -462,6 +485,7 @@ function MainApp() {
         filterType={corporationsFilterType}
         onSelectCorporation={(corpName) => {
           setPreselectedCorporation(corpName);
+          setShowTransactionsList(true);
           showToast(`Filtered filings by ${corpName}`, 'info');
         }}
       />

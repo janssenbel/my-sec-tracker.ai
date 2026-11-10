@@ -6,7 +6,8 @@ import {
   Trash2, 
   Check, 
   Calendar, 
-  FileCheck2
+  FileCheck2,
+  ChevronUp
 } from 'lucide-react';
 import { SECTransaction, STANDARD_STATUSES } from '../types';
 import { 
@@ -26,6 +27,7 @@ interface TransactionTableProps {
   onQuickSettle: (id: string) => void;
   preselectedFilter?: string;
   onClearPreselectedFilter?: () => void;
+  onClose?: () => void;
 }
 
 export const TransactionTable: React.FC<TransactionTableProps> = ({
@@ -35,7 +37,8 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
   onDeleteRecord,
   onQuickSettle,
   preselectedFilter,
-  onClearPreselectedFilter
+  onClearPreselectedFilter,
+  onClose
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed'>('all');
@@ -287,6 +290,18 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
               </button>
             )}
           </div>
+
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+              title="Hide List of Transactions"
+            >
+              <ChevronUp className="w-3.5 h-3.5" />
+              <span>Hide</span>
+            </button>
+          )}
         </div>
 
       </div>
